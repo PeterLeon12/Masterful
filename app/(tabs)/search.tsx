@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, FlatList, TextInput, RefreshControl, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { serviceCategories } from '@/constants/service-categories';
@@ -43,18 +43,37 @@ export default function SearchScreen() {
   });
   const { error, clearError } = useApiError();
 
+  // Memoize filters to prevent infinite re-renders
+  const professionalsFilters = useMemo(() => {
+    const filters: any = {
+      limit: 50,
+    };
+    
+    // Map category to categories array
+    const category = selectedCategory || advancedFilters.category;
+    if (category) {
+      filters.categories = [category];
+    }
+    
+    // Map rating
+    if (advancedFilters.rating > 0) {
+      filters.minRating = advancedFilters.rating;
+    }
+    
+    // Map price range
+    if (advancedFilters.priceRange[1] < 1000) {
+      filters.maxHourlyRate = advancedFilters.priceRange[1];
+    }
+    
+    return filters;
+  }, [selectedCategory, advancedFilters.category, advancedFilters.rating, advancedFilters.priceRange[1]]);
+
   // Fetch real professionals data from API
   const { 
     data: professionalsData, 
     isLoading: professionalsLoading, 
     refresh: refreshProfessionals 
-  } = useProfessionals({
-    limit: 50,
-    category: selectedCategory || advancedFilters.category || undefined,
-    location: selectedLocation ? `${selectedLocation.city}, ${selectedLocation.county}` : undefined,
-    minRating: advancedFilters.rating > 0 ? advancedFilters.rating : undefined,
-    maxPrice: advancedFilters.priceRange[1] < 1000 ? advancedFilters.priceRange[1] : undefined
-  });
+  } = useProfessionals(professionalsFilters);
 
   const professionals = professionalsData?.professionals || [];
 

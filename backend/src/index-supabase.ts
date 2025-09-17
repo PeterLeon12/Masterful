@@ -10,6 +10,7 @@ import { logger } from './utils/logger';
 // Import controllers
 import { supabaseAuthController } from './controllers/supabaseAuthController';
 import { supabaseJobController } from './controllers/supabaseJobController';
+import { supabaseProfessionalController } from './controllers/supabaseProfessionalController';
 
 // Import middleware
 import { supabaseAuth, requireRole } from './middleware/supabaseAuth';
@@ -112,6 +113,12 @@ app.put('/api/jobs/:id', supabaseJobController.updateJob);
 app.delete('/api/jobs/:id', supabaseJobController.deleteJob);
 app.post('/api/jobs/:id/apply', requireRole(['PROFESSIONAL']), supabaseJobController.applyToJob);
 app.get('/api/jobs/:id/applications', supabaseJobController.getJobApplications);
+
+// Professional routes
+app.get('/api/professionals', supabaseProfessionalController.getProfessionals);
+app.get('/api/professionals/:id', supabaseProfessionalController.getProfessional);
+app.use('/api/professionals/profile', supabaseAuth);
+app.put('/api/professionals/profile', requireRole(['PROFESSIONAL']), supabaseProfessionalController.updateProfessionalProfile);
 
 // Socket.IO for real-time messaging
 io.on('connection', (socket) => {

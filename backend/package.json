@@ -2,6 +2,7 @@
   "name": "masterful-backend",
   "version": "1.0.0",
   "description": "Backend API for Masterful Romanian Marketplace App",
+  "type": "module",
   "main": "dist/index.js",
   "scripts": {
     "start": "node dist/index.js",

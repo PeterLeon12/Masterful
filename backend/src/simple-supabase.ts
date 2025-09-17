@@ -3,7 +3,13 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { createClient } from '@supabase/supabase-js';
-import { logger } from './utils/logger';
+// Simple logger replacement
+const logger = {
+  info: (message: string, meta?: any) => console.log(`[INFO] ${message}`, meta || ''),
+  error: (message: string, meta?: any) => console.error(`[ERROR] ${message}`, meta || ''),
+  warn: (message: string, meta?: any) => console.warn(`[WARN] ${message}`, meta || ''),
+  debug: (message: string, meta?: any) => console.debug(`[DEBUG] ${message}`, meta || '')
+};
 
 const app = express();
 const PORT = process.env['PORT'] || 3000;
@@ -176,6 +182,239 @@ app.post('/api/auth/register', async (req, res): Promise<void> => {
     res.status(500).json({
       success: false,
       message: 'A apărut o eroare la crearea utilizatorului'
+    });
+  }
+});
+
+// Professionals endpoint
+app.get('/api/professionals', async (req, res) => {
+  try {
+    const {
+      categories,
+      minRating,
+      maxHourlyRate,
+      isAvailable,
+      limit = 20,
+      offset = 0
+    } = req.query;
+
+    // Build the query
+    let query = supabase
+      .from('professionals')
+      .select(`
+        *,
+        user:users!professionals_user_id_fkey (
+          id,
+          name,
+          email,
+          avatar,
+          phone
+        )
+      `)
+      .eq('is_available', true);
+
+    // Apply filters
+    if (categories) {
+      const categoryArray = Array.isArray(categories) ? categories : [categories];
+      query = query.overlaps('categories', categoryArray);
+    }
+
+    if (minRating) {
+      query = query.gte('rating', parseFloat(minRating as string));
+    }
+
+    if (maxHourlyRate) {
+      query = query.lte('hourly_rate', parseFloat(maxHourlyRate as string));
+    }
+
+    if (isAvailable !== undefined) {
+      query = query.eq('is_available', isAvailable === 'true');
+    }
+
+    // Apply pagination
+    query = query
+      .range(parseInt(offset as string), parseInt(offset as string) + parseInt(limit as string) - 1)
+      .order('rating', { ascending: false });
+
+    const { data: professionals, error, count } = await query;
+
+    if (error) {
+      logger.error('Error fetching professionals:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Eroare la încărcarea meșterilor',
+        error: error.message
+      });
+    }
+
+    // Calculate average ratings and review counts
+    const professionalsWithStats = professionals?.map(professional => {
+      return {
+        id: professional.id,
+        user: professional.user,
+        categories: professional.categories,
+        service_areas: professional.service_areas,
+        hourly_rate: professional.hourly_rate,
+        rating: professional.rating || 0,
+        review_count: 0,
+        completed_jobs: professional.completed_jobs || 0,
+        is_available: professional.is_available,
+        bio: professional.bio,
+        experience_years: professional.experience_years,
+        languages: professional.languages,
+        created_at: professional.created_at,
+        updated_at: professional.updated_at
+      };
+    }) || [];
+
+    res.json({
+      success: true,
+      data: {
+        professionals: professionalsWithStats,
+        total: count || 0,
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string)
+      }
+    });
+
+  } catch (error) {
+    logger.error('Error in getProfessionals:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Eroare internă a serverului',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Jobs endpoints
+app.get('/api/jobs', async (req, res) => {
+  try {
+    const { limit = 20, offset = 0, category, status = 'OPEN' } = req.query;
+
+    let query = supabase
+      .from('jobs')
+      .select(`
+        *,
+        client:users!jobs_client_id_fkey (
+          id,
+          name,
+          email,
+          avatar
+        )
+      `)
+      .eq('status', status)
+      .order('created_at', { ascending: false });
+
+    if (category) {
+      query = query.eq('category', category);
+    }
+
+    query = query
+      .range(parseInt(offset as string), parseInt(offset as string) + parseInt(limit as string) - 1);
+
+    const { data: jobs, error, count } = await query;
+
+    if (error) {
+      logger.error('Error fetching jobs:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Eroare la încărcarea joburilor',
+        error: error.message
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        jobs: jobs || [],
+        total: count || 0,
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string)
+      }
+    });
+
+  } catch (error) {
+    logger.error('Error in getJobs:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Eroare internă a serverului',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+app.post('/api/jobs', async (req, res) => {
+  try {
+    const {
+      title,
+      description,
+      category,
+      location,
+      budget_min,
+      budget_max,
+      deadline,
+      requirements,
+      images = []
+    } = req.body;
+
+    // For now, we'll use a hardcoded client_id since we don't have auth middleware
+    // In a real app, this would come from the authenticated user
+    const clientId = '7c2ba961-c16e-499e-83c9-a01abc0ea30a'; // test@example.com
+
+    if (!title || !description || !category || !location) {
+      return res.status(400).json({
+        success: false,
+        message: 'Toate câmpurile obligatorii trebuie completate'
+      });
+    }
+
+    const { data: job, error } = await supabase
+      .from('jobs')
+      .insert({
+        client_id: clientId,
+        title,
+        description,
+        category,
+        location: JSON.stringify(location),
+        budget_min: budget_min ? parseFloat(budget_min) : null,
+        budget_max: budget_max ? parseFloat(budget_max) : null,
+        deadline: deadline || null,
+        requirements: requirements || null,
+        images: images || [],
+        status: 'OPEN'
+      })
+      .select(`
+        *,
+        client:users!jobs_client_id_fkey (
+          id,
+          name,
+          email,
+          avatar
+        )
+      `)
+      .single();
+
+    if (error) {
+      logger.error('Error creating job:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Eroare la crearea jobului',
+        error: error.message
+      });
+    }
+
+    res.json({
+      success: true,
+      data: job
+    });
+
+  } catch (error) {
+    logger.error('Error in createJob:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Eroare internă a serverului',
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
