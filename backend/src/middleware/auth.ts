@@ -12,9 +12,7 @@ declare global {
     user?: {
       id: string;
       email: string;
-      name: string;
       role: string;
-      isActive: boolean;
     };
   }
   }
@@ -91,9 +89,7 @@ export const authMiddleware = async (
       req.user = {
         id: user.id,
         email: user.email,
-        name: user.name,
-        role: user.role,
-        isActive: user.isActive
+        role: user.role
       };
 
       return next();

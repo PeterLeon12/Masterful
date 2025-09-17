@@ -162,9 +162,12 @@ class ApiClient {
         };
       }
 
+      // Handle both direct data and wrapped data responses
+      const responseData = data.data || data;
+
       return {
         success: true,
-        data,
+        data: responseData,
       };
     } catch (error) {
       console.error('API request error:', error);
@@ -200,42 +203,56 @@ class ApiClient {
 
   // Authentication endpoints
   async login(credentials: LoginRequest): Promise<ApiResponse<{ user: User; token: string }>> {
-    const response = await this.request<{ user: User; token: string }>('/auth/login', {
+    const response = await this.request<{ user: User; session: { access_token: string } }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
     });
     
+    console.log('API Client - Login raw response:', JSON.stringify(response, null, 2));
+    
     // Transform the response to match our expected format
     if (response.success && response.data) {
+      console.log('API Client - Login response data:', JSON.stringify(response.data, null, 2));
+      console.log('API Client - Login session:', response.data.session);
+      console.log('API Client - Login access token:', response.data.session?.access_token);
+      
       return {
         success: true,
         data: {
           user: response.data.user,
-          token: response.data.token,
+          token: response.data.session.access_token,
         },
       };
     }
     
+    console.log('API Client - Login response not successful or no data');
     return response;
   }
 
   async register(userData: RegisterRequest): Promise<ApiResponse<{ user: User; token: string }>> {
-    const response = await this.request<{ user: User; token: string }>('/auth/register', {
+    const response = await this.request<{ user: User; session: { access_token: string } }>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(userData),
     });
     
+    console.log('API Client - Raw response:', JSON.stringify(response, null, 2));
+    
     // Transform the response to match our expected format
     if (response.success && response.data) {
+      console.log('API Client - Response data:', JSON.stringify(response.data, null, 2));
+      console.log('API Client - Session:', response.data.session);
+      console.log('API Client - Access token:', response.data.session?.access_token);
+      
       return {
         success: true,
         data: {
           user: response.data.user,
-          token: response.data.token,
+          token: response.data.session.access_token,
         },
       };
     }
     
+    console.log('API Client - Response not successful or no data');
     return response;
   }
 

@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "name": "masterful-backend",
+  "builds": [
+    {
+      "src": "src/index-supabase.ts",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "src/index-supabase.ts"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "functions": {
+    "src/index-supabase.ts": {
+      "maxDuration": 30
+    }
+  }
+}

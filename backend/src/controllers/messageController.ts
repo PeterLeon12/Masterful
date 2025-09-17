@@ -141,7 +141,7 @@ export const messageController = {
           createdAt: message.createdAt,
           sender: {
             id: userId,
-            name: req.user?.name || 'Unknown',
+            name: 'Unknown',
           }
         });
 
