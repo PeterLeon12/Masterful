@@ -1,0 +1,314 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// User model - base user with authentication
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String @default("CLIENT")
+  phone     String?
+  avatar    String?
+  isActive  Boolean  @default(true)
+  isVerified Boolean @default(false)
+  emailVerifiedAt DateTime?
+  phoneVerifiedAt DateTime?
+  lastLoginAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  profile        Profile?
+  professional   Professional?
+  client         Client?
+  jobs           Job[]        @relation("JobClient")
+  applications   JobApplication[]
+  reviews        Review[]     @relation("ReviewAuthor")
+  receivedReviews Review[]    @relation("ReviewRecipient")
+  messages       Message[]    @relation("MessageSender")
+  receivedMessages Message[]  @relation("MessageRecipient")
+  notifications  Notification[]
+  payments       Payment[]    @relation("PaymentClient")
+  professionalPayments Payment[] @relation("PaymentProfessional")
+  subscriptions  Subscription[]
+  completedJobs  Job[]        @relation("JobProfessional")
+
+  // Indexes
+  @@index([email])
+  @@index([role])
+  @@index([isActive])
+  @@index([createdAt])
+}
+
+// Profile model - extended user information
+model Profile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  bio         String?
+  dateOfBirth DateTime?
+  gender      String?
+  languages   String   // Comma-separated language codes
+  address     String?  // JSON string for address
+  socialLinks String?  // JSON string for social links
+  preferences String?  // JSON string for preferences
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Professional model - extended professional information
+model Professional {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  categories    String   // Comma-separated category IDs
+  hourlyRate    Float    @default(0)
+  currency      String   @default("RON")
+  rating        Float    @default(0)
+  reviewCount   Int      @default(0)
+  totalEarnings Float    @default(0)
+  isVerified    Boolean  @default(false)
+  isAvailable   Boolean  @default(true)
+  experience    Int      // Years of experience
+  bio           String?
+  portfolio     String   // Comma-separated portfolio URLs
+  certifications String  // Comma-separated certification URLs
+  insurance     Boolean  @default(false)
+  workingHours  String?  // JSON string for working hours
+  serviceAreas  String   // Comma-separated service area IDs
+  stripeAccountId String? // Stripe Connect account ID
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([categories])
+  @@index([rating])
+  @@index([isAvailable])
+  @@index([serviceAreas])
+}
+
+// Client model - extended client information
+model Client {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  totalSpent    Float    @default(0)
+  jobCount      Int      @default(0)
+  preferences   String?  // JSON string for preferences
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Job model - job postings
+model Job {
+  id          String      @id @default(cuid())
+  title       String
+  description String
+  category    String      // Category ID
+  subcategory String?     // Subcategory ID
+  location    String      // JSON string for location
+  budget      String      // JSON string for budget
+  status      String   @default("ACTIVE")
+  priority    String    @default("NORMAL")
+  clientId    String
+  professionalId String?
+  scheduledAt DateTime?
+  completedAt DateTime?
+  cancelledAt DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  client      User        @relation("JobClient", fields: [clientId], references: [id], onDelete: Cascade)
+  professional User?      @relation("JobProfessional", fields: [professionalId], references: [id])
+  applications JobApplication[]
+  reviews     Review[]
+  messages    Message[]
+  payments    Payment[]
+
+  @@index([clientId])
+  @@index([professionalId])
+  @@index([category])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Job Application model - professional applications for jobs
+model JobApplication {
+  id            String   @id @default(cuid())
+  jobId         String
+  professionalId String
+  proposal      String
+  price         Float
+  currency      String   @default("RON")
+  estimatedTime String   // e.g., "2 hours", "1 day"
+  status        String @default("PENDING")
+  clientNotes   String?
+  professionalNotes String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  job          Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  professional User      @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, professionalId])
+  @@index([jobId])
+  @@index([professionalId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Review model - reviews and ratings
+model Review {
+  id            String   @id @default(cuid())
+  jobId         String
+  authorId      String
+  recipientId   String
+  rating        Int      // 1-5 stars
+  comment       String?
+  isPublic      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  job          Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  author       User      @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  recipient    User      @relation("ReviewRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, authorId])
+  @@index([jobId])
+  @@index([authorId])
+  @@index([recipientId])
+  @@index([rating])
+  @@index([createdAt])
+}
+
+// Message model - chat messages
+model Message {
+  id            String   @id @default(cuid())
+  jobId         String
+  senderId      String
+  recipientId   String
+  content       String
+  messageType   String @default("TEXT")
+  isRead        Boolean  @default(false)
+  readAt        DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  job          Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  sender       User      @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  recipient    User      @relation("MessageRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@index([senderId])
+  @@index([recipientId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+// Payment model - payment transactions
+model Payment {
+  id            String   @id @default(cuid())
+  jobId         String
+  clientId      String
+  professionalId String
+  amount        Float
+  currency      String   @default("RON")
+  status        String @default("PENDING")
+  paymentMethod String
+  stripePaymentIntentId String? @unique
+  stripeChargeId String? @unique
+  description   String?
+  metadata      String?  // JSON string for metadata
+  paidAt        DateTime?
+  refundedAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  job          Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  client       User      @relation("PaymentClient", fields: [clientId], references: [id], onDelete: Cascade)
+  professional User      @relation("PaymentProfessional", fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@index([clientId])
+  @@index([professionalId])
+  @@index([status])
+  @@index([stripePaymentIntentId])
+  @@index([createdAt])
+}
+
+// Subscription model - subscription plans
+model Subscription {
+  id            String   @id @default(cuid())
+  userId        String
+  planId        String
+  status        String @default("ACTIVE")
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd Boolean @default(false)
+  cancelledAt   DateTime?
+  stripeSubscriptionId String?
+  stripeCustomerId String?
+  metadata      String?  // JSON string for metadata
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([planId])
+  @@index([status])
+  @@index([stripeSubscriptionId])
+  @@index([currentPeriodEnd])
+}
+
+// Notification model - user notifications
+model Notification {
+  id            String   @id @default(cuid())
+  userId        String
+  type          String
+  title         String
+  message       String
+  data          String?  // JSON string for data
+  isRead        Boolean  @default(false)
+  readAt        DateTime?
+  scheduledAt   DateTime?
+  sentAt        DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+// Enums converted to strings for SQLite compatibility
