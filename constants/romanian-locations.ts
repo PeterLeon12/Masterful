@@ -13,17 +13,53 @@ export const romanianCounties = [
 export const romanianCities: Record<string, string[]> = {
   'Alba': [
     'Alba Iulia', 'Aiud', 'Blaj', 'Sebeș', 'Câmpeni', 'Teiuș', 'Cugir', 'Ocna Mureș', 'Zlatna',
-    'Abrud', 'Baia de Arieș', 'Ighiu', 'Meteș', 'Poiana Vadului', 'Râmeț', 'Sălciua', 'Vințu de Jos'
+    'Abrud', 'Baia de Arieș', 'Ighiu', 'Meteș', 'Poiana Vadului', 'Râmeț', 'Sălciua', 'Vințu de Jos',
+    'Arieșeni', 'Avram Iancu', 'Berghin', 'Blandiana', 'Bucerdea Grânoasă', 'Câlnic', 'Cenade',
+    'Cergău', 'Ciugud', 'Crăciunelu de Jos', 'Daia Română', 'Doștat', 'Galda de Jos', 'Gârbova',
+    'Gârbovița', 'Hopârta', 'Horea', 'Ighiel', 'Lancrăm', 'Lopadea Nouă', 'Lunca Mureșului',
+    'Lupșa', 'Meteș', 'Mihalț', 'Mirăslău', 'Mogoș', 'Noșlac', 'Ocoliș', 'Pâclișa', 'Poșaga',
+    'Rădești', 'Râmeț', 'Rimetea', 'Roșia de Secaș', 'Roșia Montană', 'Sălciua', 'Săliștea',
+    'Săliștea de Sus', 'Sâncel', 'Sântimbru', 'Săsciori', 'Scărișoara', 'Sebeș', 'Șibot',
+    'Sohodol', 'Șona', 'Stremț', 'Șugag', 'Teiuș', 'Unirea', 'Vadu Moților', 'Valea Lungă',
+    'Vințu de Jos', 'Vurpăr'
   ],
   'Arad': [
     'Arad', 'Lipova', 'Ineu', 'Chișineu-Criș', 'Nădlac', 'Pecica', 'Sântana', 'Vinga',
-    'Covăsinț', 'Șiria', 'Bârzava', 'Buteni', 'Conop', 'Felnac', 'Hălmagiu', 'Macea'
+    'Covăsinț', 'Șiria', 'Bârzava', 'Buteni', 'Conop', 'Felnac', 'Hălmagiu', 'Macea',
+    'Almaș', 'Apateu', 'Archiș', 'Bata', 'Bârzava', 'Beliu', 'Birchiș', 'Bocsig',
+    'Brazii', 'Buteni', 'Cărand', 'Cermei', 'Chisindia', 'Conop', 'Covăsinț', 'Craiva',
+    'Dezna', 'Dieci', 'Dorobanți', 'Felnac', 'Fiscu', 'Frumușeni', 'Ghioroc', 'Grăniceri',
+    'Gurahonț', 'Hălmagiu', 'Hălmăgel', 'Hășmaș', 'Ignești', 'Ineu', 'Iratoșu', 'Livada',
+    'Macea', 'Măderat', 'Mănăștur', 'Misca', 'Moneasa', 'Nădlac', 'Olari', 'Păuliș',
+    'Pecica', 'Peregu Mare', 'Petriș', 'Pilu', 'Pleșcuța', 'Săvârșin', 'Secusigiu',
+    'Seleuș', 'Semlac', 'Sintea Mare', 'Socodor', 'Șagu', 'Șeitin', 'Șepreuș', 'Șicula',
+    'Șimand', 'Șiria', 'Șiștarovăț', 'Șofronea', 'Tauț', 'Târnova', 'Ususău', 'Vărădia de Mureș',
+    'Vinga', 'Vladimirescu', 'Zăbrani', 'Zădăreni', 'Zerind', 'Zimandu Nou'
   ],
   'Argeș': [
     'Pitești', 'Câmpulung', 'Curtea de Argeș', 'Mioveni', 'Ștefănești', 'Topoloveni', 'Costești',
-    'Bascov', 'Valea Mare-Podgoria', 'Rociu', 'Albeștii de Argeș', 'Arefu', 'Băbana', 'Băiculești'
+    'Bascov', 'Valea Mare-Podgoria', 'Rociu', 'Albeștii de Argeș', 'Arefu', 'Băbana', 'Băiculești',
+    'Albota', 'Aninoasa', 'Arefu', 'Băbana', 'Băiculești', 'Bălilești', 'Bărbuleți', 'Bezdead',
+    'Bilciurești', 'Bogați', 'Boteni', 'Brăduleț', 'Budeasa', 'Bughea de Jos', 'Bughea de Sus',
+    'Buzoești', 'Căldăraru', 'Călinești', 'Căteasca', 'Cepari', 'Cicănești', 'Ciofrângeni',
+    'Ciomăgești', 'Cocu', 'Corbeni', 'Corbi', 'Coșești', 'Cotmeana', 'Cuca', 'Dâmbovicioara',
+    'Dârleni', 'Davidești', 'Dobrești', 'Domnești', 'Drăganu', 'Dragoslavele', 'Godeni',
+    'Hârsești', 'Hârtiești', 'Izvoru', 'Leordeni', 'Lerești', 'Lunca Corbului', 'Mălureni',
+    'Mărăcineni', 'Merișani', 'Micești', 'Mihăești', 'Mioarele', 'Miroslăvești', 'Morărești',
+    'Moșoaia', 'Mozăceni', 'Mușătești', 'Negrași', 'Nucșoara', 'Oarja', 'Pietroșani', 'Poiana Lacului',
+    'Poienarii de Argeș', 'Poienarii de Muscel', 'Poienarii Vechi', 'Popești', 'Priboieni',
+    'Rătești', 'Recea', 'Rociu', 'Rucăr', 'Sălătrucu', 'Săpata', 'Schitu Golești', 'Slobozia',
+    'Stâlpeni', 'Ștefan cel Mare', 'Ștefănești', 'Stolnici', 'Șuici', 'Suseni', 'Teiu', 'Tigveni',
+    'Țițești', 'Uda', 'Ungheni', 'Valea Danului', 'Valea Iașului', 'Valea Mare-Podgoria',
+    'Vedea', 'Vlădești', 'Vulturești'
   ],
   'Bacău': [
+    'Bacău', 'Onești', 'Moinești', 'Comănești', 'Slănic-Moldova', 'Târgu Ocna', 'Dărmănești', 'Buhuși',
+    'Târgu Trotuș', 'Agăș', 'Ardeoani', 'Asău', 'Balcani', 'Berești-Bistrița', 'Berești-Tazlău', 'Berzunți',
+    'Bacău', 'Onești', 'Moinești', 'Comănești', 'Slănic-Moldova', 'Târgu Ocna', 'Dărmănești', 'Buhuși',
+    'Târgu Trotuș', 'Agăș', 'Ardeoani', 'Asău', 'Balcani', 'Berești-Bistrița', 'Berești-Tazlău', 'Berzunți',
+    'Bacău', 'Onești', 'Moinești', 'Comănești', 'Slănic-Moldova', 'Târgu Ocna', 'Dărmănești', 'Buhuși',
+    'Târgu Trotuș', 'Agăș', 'Ardeoani', 'Asău', 'Balcani', 'Berești-Bistrița', 'Berești-Tazlău', 'Berzunți',
     'Bacău', 'Onești', 'Moinești', 'Comănești', 'Slănic-Moldova', 'Târgu Ocna', 'Dărmănești', 'Buhuși',
     'Târgu Trotuș', 'Agăș', 'Ardeoani', 'Asău', 'Balcani', 'Berești-Bistrița', 'Berești-Tazlău', 'Berzunți'
   ],
