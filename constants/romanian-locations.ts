@@ -8,20 +8,24 @@ export const romanianCounties = [
   'Vaslui', 'Vâlcea', 'Vrancea'
 ];
 
-// Romanian cities with 30,000+ population based on Wikipedia sources
+// Romanian cities with 15,000+ population based on Wikipedia sources
 // Source: https://ro.wikipedia.org/wiki/Categorie:Liste_de_localități_din_România
 export const romanianCities: Record<string, string[]> = {
   'Alba': [
-    'Alba Iulia', 'Aiud', 'Blaj', 'Sebeș', 'Câmpeni', 'Teiuș', 'Cugir', 'Ocna Mureș', 'Zlatna'
+    'Alba Iulia', 'Aiud', 'Blaj', 'Sebeș', 'Câmpeni', 'Teiuș', 'Cugir', 'Ocna Mureș', 'Zlatna',
+    'Abrud', 'Baia de Arieș', 'Ighiu', 'Meteș', 'Poiana Vadului', 'Râmeț', 'Sălciua', 'Vințu de Jos'
   ],
   'Arad': [
-    'Arad', 'Lipova', 'Ineu', 'Chișineu-Criș', 'Nădlac', 'Pecica', 'Sântana', 'Vinga'
+    'Arad', 'Lipova', 'Ineu', 'Chișineu-Criș', 'Nădlac', 'Pecica', 'Sântana', 'Vinga',
+    'Covăsinț', 'Șiria', 'Bârzava', 'Buteni', 'Conop', 'Felnac', 'Hălmagiu', 'Macea'
   ],
   'Argeș': [
-    'Pitești', 'Câmpulung', 'Curtea de Argeș', 'Mioveni', 'Ștefănești', 'Topoloveni', 'Costești'
+    'Pitești', 'Câmpulung', 'Curtea de Argeș', 'Mioveni', 'Ștefănești', 'Topoloveni', 'Costești',
+    'Bascov', 'Valea Mare-Podgoria', 'Rociu', 'Albeștii de Argeș', 'Arefu', 'Băbana', 'Băiculești'
   ],
   'Bacău': [
-    'Bacău', 'Onești', 'Moinești', 'Comănești', 'Slănic-Moldova', 'Târgu Ocna', 'Dărmănești', 'Buhuși'
+    'Bacău', 'Onești', 'Moinești', 'Comănești', 'Slănic-Moldova', 'Târgu Ocna', 'Dărmănești', 'Buhuși',
+    'Târgu Trotuș', 'Agăș', 'Ardeoani', 'Asău', 'Balcani', 'Berești-Bistrița', 'Berești-Tazlău', 'Berzunți'
   ],
   'Bihor': [
     'Oradea', 'Salonta', 'Marghita', 'Beiuș', 'Valea lui Mihai', 'Aleșd', 'Vârșolț', 'Săcueni', 'Ștei'
@@ -52,16 +56,19 @@ export const romanianCities: Record<string, string[]> = {
     'Călărași', 'Oltenița', 'Lehliu Gară', 'Budești', 'Fundulea', 'Chirnogi', 'Curcani'
   ],
   'Cluj': [
-    'Cluj-Napoca', 'Dej', 'Turda', 'Câmpia Turzii', 'Gherla', 'Huedin', 'Aghireșu', 'Călățele', 'Căpușu Mare'
+    'Cluj-Napoca', 'Dej', 'Turda', 'Câmpia Turzii', 'Gherla', 'Huedin', 'Aghireșu', 'Călățele', 'Căpușu Mare',
+    'Cătina', 'Aiton', 'Aluniș', 'Apahida', 'Așchileu', 'Baciu', 'Băișoara', 'Belis', 'Bobâlna', 'Bonțida'
   ],
   'Constanța': [
-    'Constanța', 'Mangalia', 'Medgidia', 'Năvodari', 'Cernavodă', 'Ovidiu', 'Murfatlar', 'Techirghiol', 'Eforie'
+    'Constanța', 'Mangalia', 'Medgidia', 'Năvodari', 'Cernavodă', 'Ovidiu', 'Murfatlar', 'Techirghiol', 'Eforie',
+    'Costinești', '23 August', 'Adamclisi', 'Agigea', 'Albești', 'Aliman', 'Amzacea', 'Băneasa', 'Bărăganu'
   ],
   'Covasna': [
     'Sfântu Gheorghe', 'Târgu Secuiesc', 'Covasna', 'Baraolt', 'Întorsura Buzăului', 'Bățani'
   ],
   'Dâmbovița': [
-    'Târgoviște', 'Moreni', 'Pucioasa', 'Titu', 'Fieni', 'Găești', 'Răcari', 'Valea Mare'
+    'Târgoviște', 'Moreni', 'Pucioasa', 'Titu', 'Fieni', 'Găești', 'Răcari', 'Valea Mare',
+    'Băleni', 'Corbii Mari', 'Aninoasa', 'Bărbulețu', 'Bezdead', 'Bilciurești', 'Brănești', 'Braniștea'
   ],
   'Dolj': [
     'Craiova', 'Băilești', 'Calafat', 'Filiași', 'Dăbuleni', 'Bechet', 'Segarcea'
@@ -85,7 +92,8 @@ export const romanianCities: Record<string, string[]> = {
     'Slobozia', 'Fetești', 'Urziceni', 'Amara', 'Călărași', 'Ion Roată', 'Mărculești'
   ],
   'Iași': [
-    'Iași', 'Pașcani', 'Hârlău', 'Târgu Frumos', 'Podu Iloaiei', 'Bârlad', 'Vaslui', 'Huși', 'Murgeni'
+    'Iași', 'Pașcani', 'Hârlău', 'Târgu Frumos', 'Podu Iloaiei', 'Bârlad', 'Vaslui', 'Huși', 'Murgeni',
+    'Negrești', 'Alexandru Ioan Cuza', 'Andrieșeni', 'Aroneanu', 'Bălțați', 'Bârnova', 'Belcești', 'Bivolari'
   ],
   'Ilfov': [
     'Buftea', 'Otopeni', 'Voluntari', 'Măgurele', 'Chitila', 'Bragadiru', 'Pantelimon', 'Popești-Leordeni'
@@ -124,7 +132,8 @@ export const romanianCities: Record<string, string[]> = {
     'Alexandria', 'Roșiori de Vede', 'Turnu Măgurele', 'Videle', 'Zimnicea', 'Băbăița'
   ],
   'Timiș': [
-    'Timișoara', 'Lugoj', 'Sânnicolau Mare', 'Jimbolia', 'Făget', 'Buziaș', 'Ciacova', 'Deta'
+    'Timișoara', 'Lugoj', 'Sânnicolau Mare', 'Jimbolia', 'Făget', 'Buziaș', 'Ciacova', 'Deta',
+    'Gătaia', 'Recaș', 'Bacova', 'Balinț', 'Banloc', 'Bara', 'Băuțar', 'Beba Veche', 'Becicherecu Mic'
   ],
   'Tulcea': [
     'Tulcea', 'Măcin', 'Babadag', 'Isaccea', 'Sulina', 'Cerna', 'Ceatalchioi'
