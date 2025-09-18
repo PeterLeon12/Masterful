@@ -50,6 +50,9 @@ export default function SearchScreen() {
       minRating?: number;
       maxHourlyRate?: number;
       isAvailable?: boolean;
+      location?: string;
+      county?: string;
+      city?: string;
       limit?: number;
       offset?: number;
     } = {
@@ -73,8 +76,16 @@ export default function SearchScreen() {
       filters.maxHourlyRate = advancedFilters.priceRange[1];
     }
     
+    // Map location filters
+    if (selectedLocation) {
+      filters.county = selectedLocation.county;
+      filters.city = selectedLocation.city;
+      // Also add a combined location string for broader search
+      filters.location = `${selectedLocation.city}, ${selectedLocation.county}`;
+    }
+    
     return filters;
-  }, [selectedCategory, advancedFilters.category, advancedFilters.rating, advancedFilters.priceRange[1]]);
+  }, [selectedCategory, advancedFilters.category, advancedFilters.rating, advancedFilters.priceRange[1], selectedLocation]);
 
   // Fetch real professionals data from API
   const { 

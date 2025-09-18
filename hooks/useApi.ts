@@ -162,6 +162,9 @@ export function useProfessionals(filters?: {
   minRating?: number;
   maxHourlyRate?: number;
   isAvailable?: boolean;
+  location?: string;
+  county?: string;
+  city?: string;
   limit?: number;
   offset?: number;
 }) {

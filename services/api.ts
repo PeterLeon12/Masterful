@@ -403,6 +403,9 @@ class ApiClient {
     minRating?: number;
     maxHourlyRate?: number;
     isAvailable?: boolean;
+    location?: string;
+    county?: string;
+    city?: string;
     limit?: number;
     offset?: number;
   }): Promise<ApiResponse<{ professionals: Professional[]; total: number; limit: number; offset: number }>> {
@@ -411,6 +414,9 @@ class ApiClient {
     if (filters?.minRating) queryParams.append('minRating', filters.minRating.toString());
     if (filters?.maxHourlyRate) queryParams.append('maxHourlyRate', filters.maxHourlyRate.toString());
     if (filters?.isAvailable !== undefined) queryParams.append('isAvailable', filters.isAvailable.toString());
+    if (filters?.location) queryParams.append('location', filters.location);
+    if (filters?.county) queryParams.append('county', filters.county);
+    if (filters?.city) queryParams.append('city', filters.city);
     if (filters?.limit) queryParams.append('limit', filters.limit.toString());
     if (filters?.offset) queryParams.append('offset', filters.offset.toString());
 

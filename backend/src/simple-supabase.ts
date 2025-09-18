@@ -241,6 +241,9 @@ app.get('/api/professionals', async (req, res): Promise<void> => {
       minRating,
       maxHourlyRate,
       isAvailable,
+      location,
+      county,
+      city,
       limit = 20,
       offset = 0
     } = req.query;
@@ -276,6 +279,22 @@ app.get('/api/professionals', async (req, res): Promise<void> => {
 
     if (isAvailable !== undefined) {
       query = query.eq('is_available', isAvailable === 'true');
+    }
+
+    // Apply location filters
+    if (location) {
+      // Search in service_areas for the location string
+      query = query.ilike('service_areas', `%${location}%`);
+    }
+    
+    if (county) {
+      // Search for county in service_areas
+      query = query.ilike('service_areas', `%${county}%`);
+    }
+    
+    if (city) {
+      // Search for city in service_areas
+      query = query.ilike('service_areas', `%${city}%`);
     }
 
     // Apply pagination
