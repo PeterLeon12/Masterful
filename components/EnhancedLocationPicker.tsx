@@ -2,15 +2,16 @@ import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
-  FlatList,
-  StyleSheet,
   Modal,
+  FlatList,
+  TextInput,
+  StyleSheet,
   SafeAreaView,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { romanianCounties, romanianCities } from '@/constants/romanian-locations';
+import { romanianCounties, romanianCities, searchLocations, getLocationsForCounty } from '@/constants/romanian-locations';
 
 interface Location {
   county: string;
@@ -18,7 +19,7 @@ interface Location {
 }
 
 interface EnhancedLocationPickerProps {
-  selectedLocation?: Location | null;
+  selectedLocation?: Location;
   onLocationSelect: (location: Location) => void;
   placeholder?: string;
 }
@@ -31,92 +32,193 @@ export default function EnhancedLocationPicker({
   const [isVisible, setIsVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCounty, setSelectedCounty] = useState<string | null>(null);
-  const [showCounties, setShowCounties] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
 
-  // Filter counties based on search query
-  const filteredCounties = useMemo(() => {
-    if (!searchQuery.trim()) return romanianCounties;
-    return romanianCounties.filter(county =>
-      county.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [searchQuery]);
-
-  // Filter cities based on search query and selected county
-  const filteredCities = useMemo(() => {
-    if (!selectedCounty) return [];
-    const cities = romanianCities[selectedCounty] || [];
-    if (!searchQuery.trim()) return cities;
-    return cities.filter(city =>
-      city.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [selectedCounty, searchQuery]);
-
-  const handleCountySelect = (county: string) => {
-    setSelectedCounty(county);
-    setShowCounties(false);
-    setSearchQuery(''); // Clear search to show all cities
-  };
-
-  const handleCitySelect = (city: string) => {
-    if (selectedCounty) {
-      onLocationSelect({ county: selectedCounty, city });
-      setIsVisible(false);
-      setSearchQuery('');
-      setSelectedCounty(null);
-      setShowCounties(true);
+  // Get filtered locations based on search and county selection
+  const filteredLocations = useMemo(() => {
+    if (searchQuery.trim()) {
+      setIsSearching(true);
+      const results = searchLocations(searchQuery, selectedCounty || undefined);
+      setIsSearching(false);
+      return results;
+    } else if (selectedCounty) {
+      const cities = getLocationsForCounty(selectedCounty);
+      return cities.map(city => ({ county: selectedCounty, city }));
+    } else {
+      return [];
     }
-  };
+  }, [searchQuery, selectedCounty]);
 
-  const handleBackToCounties = () => {
-    setSelectedCounty(null);
-    setShowCounties(true);
-    setSearchQuery('');
-  };
+  // Get all counties for the county selector
+  const counties = romanianCounties;
 
-  const handleClose = () => {
+  const handleLocationSelect = (location: Location) => {
+    onLocationSelect(location);
     setIsVisible(false);
     setSearchQuery('');
     setSelectedCounty(null);
-    setShowCounties(true);
   };
 
-  const renderCountyItem = ({ item: county }: { item: string }) => (
+  const handleCountySelect = (county: string) => {
+    setSelectedCounty(county);
+    setSearchQuery('');
+  };
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setSelectedCounty(null);
+  };
+
+  const renderLocationItem = ({ item }: { item: Location }) => (
     <TouchableOpacity
-      style={styles.listItem}
-      onPress={() => handleCountySelect(county)}
+      style={styles.locationItem}
+      onPress={() => handleLocationSelect(item)}
     >
-      <Text style={styles.listItemText}>{county}</Text>
+      <View style={styles.locationContent}>
+        <Text style={styles.cityName}>{item.city}</Text>
+        <Text style={styles.countyName}>{item.county}</Text>
+      </View>
       <Ionicons name="chevron-forward" size={20} color="#666" />
     </TouchableOpacity>
   );
 
-  const renderCityItem = ({ item: city }: { item: string }) => (
+  const renderCountyItem = ({ item }: { item: string }) => (
     <TouchableOpacity
-      style={styles.listItem}
-      onPress={() => handleCitySelect(city)}
+      style={[
+        styles.countyItem,
+        selectedCounty === item && styles.selectedCountyItem
+      ]}
+      onPress={() => handleCountySelect(item)}
     >
-      <Text style={styles.listItemText}>{city}</Text>
-      <Ionicons name="location" size={20} color="#666" />
+      <Text style={[
+        styles.countyText,
+        selectedCounty === item && styles.selectedCountyText
+      ]}>
+        {item}
+      </Text>
+      {selectedCounty === item && (
+        <Ionicons name="checkmark" size={20} color="#007AFF" />
+      )}
     </TouchableOpacity>
   );
 
-  const getDisplayText = () => {
-    if (selectedLocation) {
-      return `${selectedLocation.city}, ${selectedLocation.county}`;
+  const renderContent = () => {
+    if (searchQuery.trim()) {
+      return (
+        <View style={styles.contentContainer}>
+          {isSearching ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#007AFF" />
+              <Text style={styles.loadingText}>Căutare...</Text>
+            </View>
+          ) : (
+            <>
+              <View style={styles.resultsHeader}>
+                <Text style={styles.resultsTitle}>
+                  Rezultate pentru "{searchQuery}"
+                </Text>
+                <Text style={styles.resultsCount}>
+                  {filteredLocations.length} locații găsite
+                </Text>
+              </View>
+              <FlatList
+                data={filteredLocations}
+                renderItem={renderLocationItem}
+                keyExtractor={(item, index) => `${item.county}-${item.city}-${index}`}
+                style={styles.locationsList}
+                showsVerticalScrollIndicator={false}
+              />
+            </>
+          )}
+        </View>
+      );
     }
-    return placeholder;
+
+    if (selectedCounty) {
+      return (
+        <View style={styles.contentContainer}>
+          <View style={styles.countyHeader}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => setSelectedCounty(null)}
+            >
+              <Ionicons name="arrow-back" size={20} color="#007AFF" />
+              <Text style={styles.backButtonText}>Înapoi</Text>
+            </TouchableOpacity>
+            <Text style={styles.countyTitle}>{selectedCounty}</Text>
+            <TouchableOpacity
+              style={styles.clearButton}
+              onPress={clearFilters}
+            >
+              <Text style={styles.clearButtonText}>Șterge</Text>
+            </TouchableOpacity>
+          </View>
+          <FlatList
+            data={filteredLocations}
+            renderItem={renderLocationItem}
+            keyExtractor={(item, index) => `${item.county}-${item.city}-${index}`}
+            style={styles.locationsList}
+            showsVerticalScrollIndicator={false}
+          />
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.contentContainer}>
+        <View style={styles.searchSection}>
+          <Text style={styles.sectionTitle}>Căutare rapidă</Text>
+          <View style={styles.searchContainer}>
+            <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Caută oraș, sat sau județ..."
+              placeholderTextColor="#999"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoFocus={false}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity
+                style={styles.clearSearchButton}
+                onPress={() => setSearchQuery('')}
+              >
+                <Ionicons name="close-circle" size={20} color="#666" />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        <View style={styles.countiesSection}>
+          <Text style={styles.sectionTitle}>Selectează județul</Text>
+          <FlatList
+            data={counties}
+            renderItem={renderCountyItem}
+            keyExtractor={(item) => item}
+            style={styles.countiesList}
+            numColumns={2}
+            showsVerticalScrollIndicator={false}
+          />
+        </View>
+      </View>
+    );
   };
 
   return (
     <>
       <TouchableOpacity
-        style={styles.selector}
+        style={styles.selectorButton}
         onPress={() => setIsVisible(true)}
       >
-        <Ionicons name="location-outline" size={20} color="#666" />
-        <Text style={[styles.selectorText, !selectedLocation && styles.placeholderText]}>
-          {getDisplayText()}
-        </Text>
+        <View style={styles.selectorContent}>
+          <Ionicons name="location-outline" size={20} color="#007AFF" />
+          <Text style={styles.selectorText}>
+            {selectedLocation 
+              ? `${selectedLocation.city}, ${selectedLocation.county}`
+              : placeholder
+            }
+          </Text>
+        </View>
         <Ionicons name="chevron-down" size={20} color="#666" />
       </TouchableOpacity>
 
@@ -124,60 +226,26 @@ export default function EnhancedLocationPicker({
         visible={isVisible}
         animationType="slide"
         presentationStyle="pageSheet"
+        onRequestClose={() => setIsVisible(false)}
       >
         <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.header}>
-            <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color="#333" />
+          <View style={styles.modalHeader}>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setIsVisible(false)}
+            >
+              <Text style={styles.cancelButtonText}>Anulează</Text>
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>
-              {showCounties ? 'Selectează județul' : `Selectează localitatea din ${selectedCounty}`}
-            </Text>
-            {!showCounties && (
-              <TouchableOpacity onPress={handleBackToCounties} style={styles.backButton}>
-                <Ionicons name="arrow-back" size={24} color="#333" />
-              </TouchableOpacity>
-            )}
+            <Text style={styles.modalTitle}>Selectează locația</Text>
+            <TouchableOpacity
+              style={styles.clearButton}
+              onPress={clearFilters}
+            >
+              <Text style={styles.clearButtonText}>Șterge</Text>
+            </TouchableOpacity>
           </View>
 
-          <View style={styles.searchContainer}>
-            <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder={showCounties ? 'Caută județ...' : 'Caută localitate...'}
-              placeholderTextColor="#999"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              autoFocus
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity
-                onPress={() => setSearchQuery('')}
-                style={styles.clearButton}
-              >
-                <Ionicons name="close-circle" size={20} color="#666" />
-              </TouchableOpacity>
-            )}
-          </View>
-
-          <FlatList
-            data={showCounties ? filteredCounties : filteredCities}
-            renderItem={showCounties ? renderCountyItem : renderCityItem}
-            keyExtractor={(item) => item}
-            style={styles.list}
-            showsVerticalScrollIndicator={false}
-            ListEmptyComponent={
-              <View style={styles.emptyContainer}>
-                <Ionicons name="search" size={48} color="#ccc" />
-                <Text style={styles.emptyText}>
-                  {showCounties ? 'Nu s-au găsit județe' : 'Nu s-au găsit localități'}
-                </Text>
-                <Text style={styles.emptySubtext}>
-                  Încearcă să modifici termenii de căutare
-                </Text>
-              </View>
-            }
-          />
+          {renderContent()}
         </SafeAreaView>
       </Modal>
     </>
@@ -185,108 +253,195 @@ export default function EnhancedLocationPicker({
 }
 
 const styles = StyleSheet.create({
-  selector: {
+  selectorButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    justifyContent: 'space-between',
+    padding: 15,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    backgroundColor: '#fff',
-    marginVertical: 8,
+    borderColor: '#e9ecef',
+  },
+  selectorContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   selectorText: {
-    flex: 1,
+    marginLeft: 10,
     fontSize: 16,
     color: '#333',
-    marginLeft: 8,
-  },
-  placeholderText: {
-    color: '#999',
+    flex: 1,
   },
   modalContainer: {
     flex: 1,
     backgroundColor: '#fff',
   },
-  header: {
+  modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#e9ecef',
   },
-  closeButton: {
-    padding: 8,
+  cancelButton: {
+    padding: 5,
   },
-  backButton: {
-    padding: 8,
+  cancelButtonText: {
+    fontSize: 16,
+    color: '#007AFF',
   },
-  headerTitle: {
+  modalTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#333',
+  },
+  clearButton: {
+    padding: 5,
+  },
+  clearButtonText: {
+    fontSize: 16,
+    color: '#007AFF',
+  },
+  contentContainer: {
     flex: 1,
-    textAlign: 'center',
+    padding: 20,
+  },
+  searchSection: {
+    marginBottom: 30,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 15,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 16,
-    marginVertical: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 10,
+    paddingHorizontal: 15,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    backgroundColor: '#f9f9f9',
+    borderColor: '#e9ecef',
   },
   searchIcon: {
-    marginRight: 8,
+    marginRight: 10,
   },
   searchInput: {
     flex: 1,
+    paddingVertical: 12,
     fontSize: 16,
     color: '#333',
   },
-  clearButton: {
-    padding: 4,
+  clearSearchButton: {
+    padding: 5,
   },
-  list: {
+  countiesSection: {
     flex: 1,
   },
-  listItem: {
+  countiesList: {
+    flex: 1,
+  },
+  countyItem: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    padding: 15,
+    margin: 5,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
   },
-  listItemText: {
+  selectedCountyItem: {
+    backgroundColor: '#e3f2fd',
+    borderColor: '#007AFF',
+  },
+  countyText: {
     fontSize: 16,
     color: '#333',
     flex: 1,
   },
-  emptyContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 48,
+  selectedCountyText: {
+    color: '#007AFF',
+    fontWeight: '600',
   },
-  emptyText: {
+  countyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 5,
+  },
+  backButtonText: {
+    marginLeft: 5,
+    fontSize: 16,
+    color: '#007AFF',
+  },
+  countyTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#666',
-    marginTop: 16,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#999',
-    marginTop: 8,
+    color: '#333',
+    flex: 1,
     textAlign: 'center',
+  },
+  locationsList: {
+    flex: 1,
+  },
+  locationItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 15,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+  },
+  locationContent: {
+    flex: 1,
+  },
+  cityName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 2,
+  },
+  countyName: {
+    fontSize: 14,
+    color: '#666',
+  },
+  resultsHeader: {
+    marginBottom: 20,
+  },
+  resultsTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 5,
+  },
+  resultsCount: {
+    fontSize: 14,
+    color: '#666',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
   },
 });
