@@ -244,6 +244,7 @@ app.get('/api/professionals', async (req, res): Promise<void> => {
       location,
       county,
       city,
+      searchQuery,
       limit = 20,
       offset = 0
     } = req.query;
@@ -295,6 +296,11 @@ app.get('/api/professionals', async (req, res): Promise<void> => {
     if (city) {
       // Search for city in service_areas
       query = query.ilike('service_areas', `%${city}%`);
+    }
+    
+    if (searchQuery) {
+      // Search in professional bio, categories, and user name
+      query = query.or(`bio.ilike.%${searchQuery}%,categories.ilike.%${searchQuery}%,user.name.ilike.%${searchQuery}%`);
     }
 
     // Apply pagination
