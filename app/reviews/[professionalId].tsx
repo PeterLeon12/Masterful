@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
@@ -44,7 +44,7 @@ export default function ProfessionalReviewsScreen() {
 
   // Fetch professional data
   const { data: professionalData, isLoading: professionalLoading } = useApi(
-    () => apiClient.getProfessional(professionalId),
+    useCallback(() => apiClient.getProfessional(professionalId), [professionalId]),
   );
 
   // Fetch reviews data
@@ -53,7 +53,7 @@ export default function ProfessionalReviewsScreen() {
     isLoading: reviewsLoading, 
     refresh: refreshReviews 
   } = useApi(
-    () => apiClient.get(`/professionals/${professionalId}/reviews`),
+    useCallback(() => apiClient.get(`/professionals/${professionalId}/reviews`), [professionalId]),
   );
 
   useEffect(() => {
