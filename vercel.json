@@ -1,31 +1,35 @@
 {
   "version": 2,
-  "buildCommand": "npm run build:web",
-  "outputDirectory": "dist",
+  "buildCommand": "cd backend && npm install && npm run build",
   "builds": [
     {
-      "src": "backend/src/index.ts",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": ["backend/**"]
-      }
+      "src": "backend/dist/index.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "backend/src/index.ts"
+      "dest": "backend/dist/index.js"
+    },
+    {
+      "src": "/health",
+      "dest": "backend/dist/index.js"
     },
     {
       "src": "/(.*)",
-      "dest": "/index.html"
+      "dest": "public/index.html"
     }
   ],
   "env": {
     "NODE_ENV": "production"
   },
   "functions": {
-    "backend/src/index.ts": {
+    "backend/dist/index.js": {
       "maxDuration": 30
     }
   }
