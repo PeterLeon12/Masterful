@@ -55,7 +55,7 @@ app.get('/health', async (_req, res) => {
     // Test Supabase connection
     const { error } = await supabase.from('users').select('count').limit(1);
     
-    return res.json({
+    res.json({
       status: error ? 'ERROR' : 'OK',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
@@ -69,7 +69,7 @@ app.get('/health', async (_req, res) => {
     });
   } catch (error) {
     logger.error('Health check error:', error);
-    return res.status(500).json({
+    res.status(500).json({
       status: 'ERROR',
       timestamp: new Date().toISOString(),
       error: 'Health check failed'
@@ -83,20 +83,20 @@ app.get('/api/test', async (_req, res) => {
     const { data, error } = await supabase.from('users').select('*').limit(1);
     
     if (error) {
-      return res.status(500).json({
+      res.status(500).json({
         success: false,
         message: 'Supabase connection failed',
         error: error.message
       });
     }
 
-    return res.json({
+    res.json({
       success: true,
       message: 'Supabase connection successful',
       data: data
     });
   } catch (error) {
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       message: 'Test failed',
       error: error
@@ -187,7 +187,7 @@ app.post('/api/auth/register', async (req, res): Promise<void> => {
 });
 
 // Professionals endpoint
-app.get('/api/professionals', async (req, res) => {
+app.get('/api/professionals', async (req, res): Promise<void> => {
   try {
     const {
       categories,
@@ -240,7 +240,7 @@ app.get('/api/professionals', async (req, res) => {
 
     if (error) {
       logger.error('Error fetching professionals:', error);
-      return res.status(500).json({
+      res.status(500).json({
         success: false,
         message: 'Eroare la încărcarea meșterilor',
         error: error.message
@@ -276,6 +276,7 @@ app.get('/api/professionals', async (req, res) => {
         offset: parseInt(offset as string)
       }
     });
+    return;
 
   } catch (error) {
     logger.error('Error in getProfessionals:', error);
@@ -288,7 +289,7 @@ app.get('/api/professionals', async (req, res) => {
 });
 
 // Jobs endpoints
-app.get('/api/jobs', async (req, res) => {
+app.get('/api/jobs', async (req, res): Promise<void> => {
   try {
     const { limit = 20, offset = 0, category, status = 'OPEN' } = req.query;
 
@@ -317,7 +318,7 @@ app.get('/api/jobs', async (req, res) => {
 
     if (error) {
       logger.error('Error fetching jobs:', error);
-      return res.status(500).json({
+      res.status(500).json({
         success: false,
         message: 'Eroare la încărcarea joburilor',
         error: error.message
@@ -333,6 +334,7 @@ app.get('/api/jobs', async (req, res) => {
         offset: parseInt(offset as string)
       }
     });
+    return;
 
   } catch (error) {
     logger.error('Error in getJobs:', error);
@@ -344,7 +346,7 @@ app.get('/api/jobs', async (req, res) => {
   }
 });
 
-app.post('/api/jobs', async (req, res) => {
+app.post('/api/jobs', async (req, res): Promise<void> => {
   try {
     const {
       title,
@@ -363,7 +365,7 @@ app.post('/api/jobs', async (req, res) => {
     const clientId = '7c2ba961-c16e-499e-83c9-a01abc0ea30a'; // test@example.com
 
     if (!title || !description || !category || !location) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Toate câmpurile obligatorii trebuie completate'
       });
@@ -397,7 +399,7 @@ app.post('/api/jobs', async (req, res) => {
 
     if (error) {
       logger.error('Error creating job:', error);
-      return res.status(500).json({
+      res.status(500).json({
         success: false,
         message: 'Eroare la crearea jobului',
         error: error.message
@@ -408,6 +410,7 @@ app.post('/api/jobs', async (req, res) => {
       success: true,
       data: job
     });
+    return;
 
   } catch (error) {
     logger.error('Error in createJob:', error);
@@ -424,7 +427,7 @@ app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Email și parola sunt obligatorii'
       });
@@ -436,7 +439,7 @@ app.post('/api/auth/login', async (req, res) => {
     });
 
     if (authError || !authData.user) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         message: 'Email sau parolă incorectă'
       });
@@ -446,17 +449,17 @@ app.post('/api/auth/login', async (req, res) => {
     const { data: user, error: userError } = await supabase
       .from('users')
       .select('*')
-      .eq('id', authData.user.id)
+      .eq('id', authData.user!.id)
       .single();
 
     if (userError || !user) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         message: 'Profilul utilizatorului nu a fost găsit'
       });
     }
 
-    return res.json({
+    res.json({
       success: true,
       message: 'Autentificare reușită',
       data: {
@@ -466,7 +469,7 @@ app.post('/api/auth/login', async (req, res) => {
     });
   } catch (error) {
     logger.error('Login error:', error);
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       message: 'A apărut o eroare la autentificare'
     });

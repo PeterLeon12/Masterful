@@ -104,6 +104,7 @@ export const supabaseProfessionalController = {
           offset: parseInt(offset as string)
         }
       });
+      return;
 
     } catch (error) {
       logger.error('Error in getProfessionals:', error);
@@ -112,6 +113,7 @@ export const supabaseProfessionalController = {
         message: 'Eroare internă a serverului',
         error: error instanceof Error ? error.message : 'Unknown error'
       });
+      return;
     }
   },
 
@@ -196,6 +198,7 @@ export const supabaseProfessionalController = {
         success: true,
         data: professionalWithStats
       });
+      return;
 
     } catch (error) {
       logger.error('Error in getProfessional:', error);
@@ -204,6 +207,7 @@ export const supabaseProfessionalController = {
         message: 'Eroare internă a serverului',
         error: error instanceof Error ? error.message : 'Unknown error'
       });
+      return;
     }
   },
 
@@ -303,6 +307,7 @@ export const supabaseProfessionalController = {
           }
         }
       });
+      return;
 
     } catch (error) {
       logger.error('Error in updateProfessionalProfile:', error);
@@ -311,6 +316,7 @@ export const supabaseProfessionalController = {
         message: 'Eroare internă a serverului',
         error: error instanceof Error ? error.message : 'Unknown error'
       });
+      return;
     }
   }
 };

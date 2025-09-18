@@ -45,8 +45,16 @@ export default function SearchScreen() {
 
   // Memoize filters to prevent infinite re-renders
   const professionalsFilters = useMemo(() => {
-    const filters: any = {
+    const filters: {
+      categories?: string[];
+      minRating?: number;
+      maxHourlyRate?: number;
+      isAvailable?: boolean;
+      limit?: number;
+      offset?: number;
+    } = {
       limit: 50,
+      isAvailable: true,
     };
     
     // Map category to categories array

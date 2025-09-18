@@ -158,18 +158,15 @@ export function useJobs(filters?: {
 }
 
 export function useProfessionals(filters?: {
-  category?: string;
-  location?: string;
+  categories?: string[];
   minRating?: number;
-  maxPrice?: number;
-  languages?: string[];
-  page?: number;
+  maxHourlyRate?: number;
+  isAvailable?: boolean;
   limit?: number;
+  offset?: number;
 }) {
-  return useApi(
-    () => apiClient.getProfessionals(filters),
-    { immediate: true }
-  );
+  const apiCall = useCallback(() => apiClient.getProfessionals(filters), [filters]);
+  return useApi(apiCall, { immediate: true });
 }
 
 export function useProfile() {
