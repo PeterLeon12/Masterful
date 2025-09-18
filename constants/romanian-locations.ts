@@ -8,8 +8,16 @@ export const romanianCounties = [
 ];
 
 export const romanianCities: Record<string, string[]> = {
-  'Alba': ['Alba Iulia', 'Aiud', 'Blaj', 'Sebeș', 'Câmpeni', 'Teiuș', 'Cugir', 'Ocna Mureș', 'Zlatna', 'Abrud'],
-  'Arad': ['Arad', 'Lipova', 'Ineu', 'Chișineu-Criș', 'Nădlac', 'Pecica', 'Sântana', 'Vinga', 'Covăsinț', 'Șiria'],
+  'Alba': [
+    'Alba Iulia', 'Aiud', 'Blaj', 'Sebeș', 'Câmpeni', 'Teiuș', 'Cugir', 'Ocna Mureș', 'Zlatna', 'Abrud',
+    'Baia de Arieș', 'Ighiu', 'Meteș', 'Poiana Vadului', 'Râmeț', 'Sălciua', 'Vințu de Jos', 'Vadu Moților', 'Lupșa', 'Mogoș',
+    'Pianu de Sus', 'Săliștea', 'Stremț', 'Valea Lungă', 'Albac', 'Arieșeni', 'Avram Iancu', 'Berghin', 'Bistra', 'Blandiana'
+  ],
+  'Arad': [
+    'Arad', 'Lipova', 'Ineu', 'Chișineu-Criș', 'Nădlac', 'Pecica', 'Sântana', 'Vinga', 'Covăsinț', 'Șiria',
+    'Bârzava', 'Buteni', 'Conop', 'Felnac', 'Hălmagiu', 'Macea', 'Nadăș', 'Păuliș', 'Săvârșin', 'Sebiș',
+    'Seleuș', 'Sintea Mare', 'Șofronea', 'Tauț', 'Ususău', 'Vărădia de Mureș', 'Zăbrani', 'Zărand', 'Zerind', 'Zimandu Nou'
+  ],
   'Argeș': ['Pitești', 'Câmpulung', 'Curtea de Argeș', 'Mioveni', 'Ștefănești', 'Topoloveni', 'Costești', 'Bascov', 'Valea Mare-Podgoria', 'Rociu'],
   'Bacău': ['Bacău', 'Onești', 'Moinești', 'Comănești', 'Slănic-Moldova', 'Târgu Ocna', 'Dărmănești', 'Buhuși', 'Târgu Trotuș', 'Agăș'],
   'Bihor': ['Oradea', 'Salonta', 'Marghita', 'Beiuș', 'Valea lui Mihai', 'Aleșd', 'Vârșolț', 'Săcueni', 'Ștei', 'Tinca'],
@@ -17,11 +25,19 @@ export const romanianCities: Record<string, string[]> = {
   'Botoșani': ['Botoșani', 'Dorohoi', 'Bucecea', 'Săveni', 'Flămânzi', 'Broscăuți', 'Hudești', 'Mihăileni', 'Trușești', 'Văculești'],
   'Brașov': ['Brașov', 'Făgăraș', 'Săcele', 'Codlea', 'Râșnov', 'Rupea', 'Victoria', 'Zărnești', 'Predeal', 'Sânpetru'],
   'Brăila': ['Brăila', 'Ianca', 'Însurăței', 'Faurei', 'Tichilești', 'Viziru', 'Cireșu', 'Chiscani', 'Gura Gârluței', 'Mărașu'],
-  'București': ['Sectorul 1', 'Sectorul 2', 'Sectorul 3', 'Sectorul 4', 'Sectorul 5', 'Sectorul 6', 'Otopeni', 'Băneasa', 'Voluntari', 'Măgurele'],
+  'București': [
+    'Sectorul 1', 'Sectorul 2', 'Sectorul 3', 'Sectorul 4', 'Sectorul 5', 'Sectorul 6', 'Otopeni', 'Băneasa', 'Voluntari', 'Măgurele',
+    'Buftea', 'Chitila', 'Bragadiru', 'Pantelimon', 'Popești-Leordeni', '1 Decembrie', 'Cernica', 'Ciolpani', 'Clinceni', 'Corbeanca',
+    'Dărăști-Ilfov', 'Dobroești', 'Domnești', 'Dragomirești-Vale', 'Găneasa', 'Glina', 'Grădiștea', 'Gruiu', 'Jilava', 'Moara Vlăsiei'
+  ],
   'Buzău': ['Buzău', 'Râmnicu Sărat', 'Nehoiu', 'Pogoanele', 'Mărăcineni', 'Glodeanu Siliștea', 'Cernătești', 'Săgeata', 'Călățele', 'Vadu Pașii'],
   'Caraș-Severin': ['Reșița', 'Caransebeș', 'Oravița', 'Moldova Nouă', 'Anina', 'Băile Herculane', 'Timișoara', 'Lugoj', 'Jimbolia', 'Făget'],
   'Călărași': ['Călărași', 'Oltenița', 'Lehliu Gară', 'Budești', 'Fundulea', 'Chirnogi', 'Curcani', 'Dor Mărunt', 'Ileana', 'Jegălia'],
-  'Cluj': ['Cluj-Napoca', 'Dej', 'Turda', 'Câmpia Turzii', 'Gherla', 'Huedin', 'Câmpia Turzii', 'Aghireșu', 'Călățele', 'Călățele'],
+  'Cluj': [
+    'Cluj-Napoca', 'Dej', 'Turda', 'Câmpia Turzii', 'Gherla', 'Huedin', 'Aghireșu', 'Călățele', 'Căpușu Mare', 'Cătina',
+    'Aiton', 'Aluniș', 'Apahida', 'Așchileu', 'Baciu', 'Băișoara', 'Belis', 'Bobâlna', 'Bonțida', 'Borșa',
+    'Buza', 'Căianu', 'Cămărașu', 'Cășeiu', 'Chinteni', 'Chiuiești', 'Ciucea', 'Ciurila', 'Cojocna', 'Cornișești'
+  ],
   'Constanța': ['Constanța', 'Mangalia', 'Medgidia', 'Năvodari', 'Cernavodă', 'Ovidiu', 'Murfatlar', 'Techirghiol', 'Eforie', 'Costinești'],
   'Covasna': ['Sfântu Gheorghe', 'Târgu Secuiesc', 'Covasna', 'Baraolt', 'Întorsura Buzăului', 'Bățani', 'Bodoc', 'Boroșneu Mare', 'Brăduț', 'Brețcu'],
   'Dâmbovița': ['Târgoviște', 'Moreni', 'Pucioasa', 'Titu', 'Fieni', 'Găești', 'Răcari', 'Valea Mare', 'Băleni', 'Corbii Mari'],
@@ -45,7 +61,11 @@ export const romanianCities: Record<string, string[]> = {
   'Sibiu': ['Sibiu', 'Mediaș', 'Cisnădie', 'Avrig', 'Agnita', 'Cârța', 'Copșa Mică', 'Dumbrăveni', 'Miercurea Sibiului', 'Ocna Sibiului'],
   'Suceava': ['Suceava', 'Fălticeni', 'Rădăuți', 'Câmpulung Moldovenesc', 'Vatra Dornei', 'Gura Humorului', 'Salcea', 'Liteni', 'Milișăuți', 'Vicovu de Sus'],
   'Teleorman': ['Alexandria', 'Roșiori de Vede', 'Turnu Măgurele', 'Videle', 'Zimnicea', 'Băbăița', 'Balaci', 'Beciu', 'Blejești', 'Bogdana'],
-  'Timiș': ['Timișoara', 'Lugoj', 'Sânnicolau Mare', 'Jimbolia', 'Făget', 'Buziaș', 'Ciacova', 'Deta', 'Gătaia', 'Recaș'],
+  'Timiș': [
+    'Timișoara', 'Lugoj', 'Sânnicolau Mare', 'Jimbolia', 'Făget', 'Buziaș', 'Ciacova', 'Deta', 'Gătaia', 'Recaș',
+    'Bacova', 'Balinț', 'Banloc', 'Bara', 'Băuțar', 'Beba Veche', 'Becicherecu Mic', 'Belinț', 'Bethausen', 'Biled',
+    'Birda', 'Bogda', 'Boldur', 'Brestovăț', 'Bucovăț', 'Cărpiniș', 'Cenad', 'Cenei', 'Checea', 'Ciacova'
+  ],
   'Tulcea': ['Tulcea', 'Măcin', 'Babadag', 'Isaccea', 'Sulina', 'Cerna', 'Ceatalchioi', 'Chilia Veche', 'Ciucurova', 'Dăeni'],
   'Vaslui': ['Vaslui', 'Bârlad', 'Huși', 'Murgeni', 'Negrești', 'Băcani', 'Bălteni', 'Banca', 'Berezeni', 'Blăgești'],
   'Vâlcea': ['Râmnicu Vâlcea', 'Drăgășani', 'Băbeni', 'Băile Govora', 'Băile Olănești', 'Brezoi', 'Călimănești', 'Horezu', 'Ocnele Mari', 'Râmnicu Vâlcea'],
