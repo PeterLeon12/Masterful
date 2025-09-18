@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import NotificationsList from '@/components/NotificationsList';
@@ -31,7 +31,7 @@ export default function NotificationsScreen() {
     data: notificationsData, 
     isLoading: notificationsLoading, 
     refresh: refreshNotifications 
-  } = useApi(() => apiClient.get('/notifications'));
+  } = useApi(useCallback(() => apiClient.get('/notifications'), []));
 
   useEffect(() => {
     if (notificationsData) {
