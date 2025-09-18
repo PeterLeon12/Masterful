@@ -1,84 +1,36 @@
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
-import dotenv from 'dotenv';
+export default function handler(req: any, res: any) {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-// Load environment variables
-dotenv.config();
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Middleware
-app.use(helmet());
-app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
-  credentials: true
-}));
-
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
-});
-app.use(limiter);
-
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
-
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.status(200).json({
-    status: 'OK',
-    message: 'Masterful API is running!',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
-  });
-});
-
-// Import and use the main API routes
-import('./backend/src/simple-supabase.js').then((module) => {
-  // The backend module should export the app or routes
-  if (module.default) {
-    app.use('/api', module.default);
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
   }
-}).catch((error) => {
-  console.error('Error loading backend module:', error);
+
+  // Handle different API routes
+  const { pathname } = new URL(req.url, `http://${req.headers.host}`);
   
-  // Fallback API routes
-  app.get('/api/*', (req, res) => {
-    res.status(404).json({
-      error: 'API endpoint not found',
-      path: req.path,
-      method: req.method
+  if (pathname === '/api/health') {
+    res.status(200).json({
+      status: 'OK',
+      message: 'Masterful API is running!',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development'
     });
-  });
-});
-
-// Error handling middleware
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('API Error:', err);
-  res.status(500).json({
-    error: 'Internal server error',
-    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
-  });
-});
-
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({
-    error: 'Not found',
-    message: 'The requested resource was not found'
-  });
-});
-
-// Start server
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
-  });
+  } else if (pathname === '/api/test') {
+    res.status(200).json({
+      message: 'API test endpoint working!',
+      method: req.method,
+      path: pathname
+    });
+  } else {
+    res.status(404).json({
+      error: 'Not found',
+      message: 'API endpoint not found',
+      path: pathname
+    });
+  }
 }
-
-export default app;
