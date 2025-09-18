@@ -1,10 +1,15 @@
 {
   "version": 2,
-  "functions": {
-    "api/health.ts": {
-      "runtime": "nodejs18.x"
+  "builds": [
+    {
+      "src": "api/health.ts",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "dist/**",
+      "use": "@vercel/static"
     }
-  },
+  ],
   "routes": [
     {
       "src": "/api/health",
