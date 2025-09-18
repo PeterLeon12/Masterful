@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Modal,
   SafeAreaView,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { romanianCounties, romanianCities } from '@/constants/romanian-locations';
@@ -17,17 +18,17 @@ interface Location {
   city: string;
 }
 
-interface EnhancedLocationPickerProps {
+interface SearchableLocationPickerProps {
   selectedLocation?: Location | null;
   onLocationSelect: (location: Location) => void;
   placeholder?: string;
 }
 
-export default function EnhancedLocationPicker({
+export default function SearchableLocationPicker({
   selectedLocation,
   onLocationSelect,
   placeholder = 'Selectează locația'
-}: EnhancedLocationPickerProps) {
+}: SearchableLocationPickerProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCounty, setSelectedCounty] = useState<string | null>(null);

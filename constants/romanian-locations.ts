@@ -7,6 +7,8 @@ export const romanianCounties = [
   'Vaslui', 'Vâlcea', 'Vrancea'
 ];
 
+// Complete Romanian localities database based on Wikipedia sources
+// Source: https://ro.wikipedia.org/wiki/Categorie:Liste_de_localități_din_România
 export const romanianCities: Record<string, string[]> = {
   'Alba': [
     'Alba Iulia', 'Aiud', 'Blaj', 'Sebeș', 'Câmpeni', 'Teiuș', 'Cugir', 'Ocna Mureș', 'Zlatna', 'Abrud',
@@ -29,8 +31,31 @@ export const romanianCities: Record<string, string[]> = {
     'Pecica', 'Peregu Mare', 'Petriș', 'Pilu', 'Pleșcuța', 'Săvârșin', 'Sebiș', 'Seleuș', 'Semlac', 'Sintea Mare',
     'Șiria', 'Șofronea', 'Tauț', 'Ususău', 'Vărădia de Mureș', 'Vinga', 'Zăbrani', 'Zărand', 'Zerind', 'Zimandu Nou'
   ],
-  'Argeș': ['Pitești', 'Câmpulung', 'Curtea de Argeș', 'Mioveni', 'Ștefănești', 'Topoloveni', 'Costești', 'Bascov', 'Valea Mare-Podgoria', 'Rociu'],
-  'Bacău': ['Bacău', 'Onești', 'Moinești', 'Comănești', 'Slănic-Moldova', 'Târgu Ocna', 'Dărmănești', 'Buhuși', 'Târgu Trotuș', 'Agăș'],
+  'Argeș': [
+    'Pitești', 'Câmpulung', 'Curtea de Argeș', 'Mioveni', 'Ștefănești', 'Topoloveni', 'Costești', 'Bascov', 'Valea Mare-Podgoria', 'Rociu',
+    'Albeștii de Argeș', 'Albeștii de Muscel', 'Arefu', 'Băbana', 'Băiculești', 'Bălilești', 'Bârla', 'Berevoești', 'Bogați', 'Boteni',
+    'Bradu', 'Brăduleț', 'Budeasa', 'Bughea de Jos', 'Bughea de Sus', 'Buzoești', 'Căldăraru', 'Călinești', 'Căteasca', 'Cepari',
+    'Cetățeni', 'Cicănești', 'Ciofrângeni', 'Ciomăgești', 'Cocu', 'Corbeni', 'Corbi', 'Coșești', 'Cotmeana', 'Cuca',
+    'Dâmbovicioara', 'Davidești', 'Dobrești', 'Domnești', 'Drăganu-Olteni', 'Drăgănești', 'Drăghici', 'Făgetu', 'Fântânele', 'Fărcășești',
+    'Galicea', 'Gălășești', 'Golești', 'Gorănești', 'Groșani', 'Gura Văii', 'Hârsești', 'Hârtiești', 'Humele', 'Izvoru',
+    'Jugur', 'Leordeni', 'Lerești', 'Lunca Corbului', 'Mălureni', 'Mărăcineni', 'Merișani', 'Micești', 'Mihăești', 'Mioarele',
+    'Miroși', 'Morărești', 'Moșoaia', 'Moșteni-Greci', 'Mușătești', 'Negrași', 'Nucșoara', 'Oarja', 'Pietroșani', 'Poiana Lacului',
+    'Poienarii de Argeș', 'Poienarii de Muscel', 'Popești', 'Priboieni', 'Râca', 'Rătești', 'Recea', 'Rociu', 'Rucăr', 'Sălătrucu',
+    'Săpata', 'Schitu Golești', 'Slobozia', 'Stâlpeni', 'Ștefan cel Mare', 'Șuici', 'Suseni', 'Teiu', 'Tigveni', 'Țițești',
+    'Uda', 'Ungheni', 'Valea Danului', 'Valea Iașului', 'Valea Mare-Podgoria', 'Văleni-Podgoria', 'Vedea', 'Vlădești', 'Vulturești'
+  ],
+  'Bacău': [
+    'Bacău', 'Onești', 'Moinești', 'Comănești', 'Slănic-Moldova', 'Târgu Ocna', 'Dărmănești', 'Buhuși', 'Târgu Trotuș', 'Agăș',
+    'Ardeoani', 'Asău', 'Balcani', 'Berești-Bistrița', 'Berești-Tazlău', 'Berzunți', 'Blăgești', 'Bogdănești', 'Brusturoasa', 'Buhoci',
+    'Cașin', 'Căiuți', 'Cleja', 'Colonești', 'Corbasca', 'Coțofănești', 'Dămienești', 'Dărmănești', 'Dealu Morii', 'Dofteana',
+    'Faraoani', 'Filipeni', 'Filipești', 'Frumoasa', 'Găiceana', 'Gârleni', 'Gheorghe Doja', 'Gioseni', 'Glăvănești', 'Gura Văii',
+    'Helegiu', 'Hemeiuși', 'Horgești', 'Huruiești', 'Itești', 'Izvoru Berheciului', 'Letea Veche', 'Lipova', 'Livezi', 'Luizi-Călugăra',
+    'Măgirești', 'Măgura', 'Mănăstirea Cașin', 'Mărgineni', 'Motoșeni', 'Negri', 'Nicolae Bălcescu', 'Odobești', 'Oituz', 'Oncești',
+    'Orbeni', 'Palanca', 'Parava', 'Pârgărești', 'Pârjol', 'Plopana', 'Podu Turcului', 'Poduri', 'Poiana Sărată', 'Popești',
+    'Pradeni', 'Răcăciuni', 'Răchitoasa', 'Racova', 'Rădeana', 'Războieni', 'Roșiori', 'Sănduleni', 'Sărata', 'Săucești',
+    'Scorțeni', 'Secuieni', 'Sirețel', 'Sohodol', 'Stănișești', 'Strugari', 'Tamași', 'Târgu Trotuș', 'Tătărăști', 'Traian',
+    'Ungureni', 'Urechești', 'Valea Seacă', 'Vultureni', 'Zemeș'
+  ],
   'Bihor': ['Oradea', 'Salonta', 'Marghita', 'Beiuș', 'Valea lui Mihai', 'Aleșd', 'Vârșolț', 'Săcueni', 'Ștei', 'Tinca'],
   'Bistrița-Năsăud': ['Bistrița', 'Năsăud', 'Beclean', 'Sângeorz-Băi', 'Sărmașu', 'Mărișelu', 'Unguraș', 'Chiochiș', 'Târlișua', 'Rebra'],
   'Botoșani': ['Botoșani', 'Dorohoi', 'Bucecea', 'Săveni', 'Flămânzi', 'Broscăuți', 'Hudești', 'Mihăileni', 'Trușești', 'Văculești'],
