@@ -5,8 +5,9 @@
   "scripts": {
     "start": "npx expo start",
     "start-web": "npx expo start --web",
-    "build": "npx expo export --platform web",
+    "build": "npx expo export --platform web --output-dir dist",
     "build:web": "npx expo export --platform web --output-dir dist",
+    "vercel-build": "npx expo export --platform web --output-dir dist",
     "lint": "expo lint",
     "android": "expo run:android",
     "ios": "expo run:ios"

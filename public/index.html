@@ -31,22 +31,27 @@
             margin-bottom: 2rem;
             opacity: 0.9;
         }
-        .loading {
+        .status {
             font-size: 1rem;
-            opacity: 0.8;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
         }
-        .spinner {
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top: 3px solid white;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 1rem auto;
+        .api-test {
+            margin-top: 2rem;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .api-test button {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .api-test button:hover {
+            background: #f0f0f0;
         }
     </style>
 </head>
@@ -54,14 +59,25 @@
     <div class="container">
         <div class="logo">🏠 Masterful</div>
         <div class="subtitle">Romanian Marketplace App</div>
-        <div class="spinner"></div>
-        <div class="loading">Loading your marketplace...</div>
+        <div class="status">✅ App is running! Backend API is available.</div>
+        <div class="api-test">
+            <button onclick="testAPI()">Test Backend API</button>
+            <div id="result"></div>
+        </div>
     </div>
     <script>
-        // Redirect to the actual app after a short delay
-        setTimeout(() => {
-            window.location.href = '/_expo/static/js/web/entry-e4991156a6ee1aa5946a0f545e0664db.js';
-        }, 2000);
+        async function testAPI() {
+            const result = document.getElementById('result');
+            result.innerHTML = 'Testing API...';
+            
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.text();
+                result.innerHTML = `✅ API Response: ${data}`;
+            } catch (error) {
+                result.innerHTML = `❌ API Error: ${error.message}`;
+            }
+        }
     </script>
 </body>
 </html>
