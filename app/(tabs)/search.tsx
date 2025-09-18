@@ -115,8 +115,8 @@ export default function SearchScreen() {
 
   interface ProfessionalData {
     id: string;
-    categories?: string;
-    serviceAreas?: string;
+    categories?: string[] | string;
+    serviceAreas?: string[] | string;
     hourlyRate: number;
     rating?: number;
     reviewCount?: number;
@@ -128,8 +128,8 @@ export default function SearchScreen() {
   }
 
   const renderProfessionalCard = ({ item }: { item: ProfessionalData }) => {
-    const specialties = item.categories ? item.categories.split(',').map((cat: string) => cat.trim()) : [];
-    const location = item.serviceAreas ? JSON.parse(item.serviceAreas)[0] : 'Locație nespecificată';
+    const specialties = Array.isArray(item.categories) ? item.categories : (item.categories ? item.categories.split(',').map((cat: string) => cat.trim()) : []);
+    const location = Array.isArray(item.serviceAreas) ? item.serviceAreas[0] : (item.serviceAreas ? JSON.parse(item.serviceAreas)[0] : 'Locație nespecificată');
     
     return (
       <TouchableOpacity style={styles.professionalCard}>

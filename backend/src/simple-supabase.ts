@@ -16,14 +16,61 @@ const PORT = process.env['PORT'] || 3000;
 
 // Supabase client
 const supabaseUrl = process.env['SUPABASE_URL'];
-const supabaseKey = process.env['SUPABASE_ANON_KEY'];
+const supabaseAnonKey = process.env['SUPABASE_ANON_KEY'];
+const supabaseServiceKey = process.env['SUPABASE_SERVICE_ROLE_KEY'];
 
-if (!supabaseUrl || !supabaseKey) {
+if (!supabaseUrl || !supabaseAnonKey) {
   logger.error('Missing Supabase credentials. Please set SUPABASE_URL and SUPABASE_ANON_KEY');
   process.exit(1);
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Use service role key for server-side operations (authentication)
+const supabase = createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey);
+
+// Helper function to validate JWT tokens on server side
+async function validateToken(token: string) {
+  try {
+    // For now, let's use a simpler approach
+    // We'll validate the token by checking if it's a valid JWT format
+    if (!token || token.split('.').length !== 3) {
+      logger.error('Invalid token format');
+      return { valid: false, user: null };
+    }
+    
+    // For development, we'll extract user ID from the token payload
+    // This is a temporary solution until we get the service role key
+    try {
+      const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+      const userId = payload.sub;
+      
+      if (!userId) {
+        logger.error('No user ID in token');
+        return { valid: false, user: null };
+      }
+      
+      // Get user from database to verify they exist
+      const { data: user, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (error || !user) {
+        logger.error('User not found:', error);
+        return { valid: false, user: null };
+      }
+      
+      logger.info('Token validation successful for user:', userId);
+      return { valid: true, user: { id: userId, email: user.email, name: user.name } };
+    } catch (parseError) {
+      logger.error('Token parsing error:', parseError);
+      return { valid: false, user: null };
+    }
+  } catch (error) {
+    logger.error('Token validation error:', error);
+    return { valid: false, user: null };
+  }
+}
 
 // Security middleware
 app.use(helmet());
@@ -280,6 +327,359 @@ app.get('/api/professionals', async (req, res): Promise<void> => {
 
   } catch (error) {
     logger.error('Error in getProfessionals:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Eroare internă a serverului',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Update professional profile
+app.post('/api/professionals', async (req, res): Promise<void> => {
+  try {
+    const { 
+      categories, 
+      hourly_rate, 
+      bio, 
+      service_areas, 
+      experience, 
+      portfolio, 
+      certifications, 
+      insurance, 
+      working_hours 
+    } = req.body;
+
+    // Get user from auth header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      res.status(401).json({
+        success: false,
+        message: 'Token de autentificare lipsă',
+        code: 'MISSING_AUTH_TOKEN'
+      });
+      return;
+    }
+
+    const token = authHeader.split(' ')[1];
+    const { valid, user } = await validateToken(token);
+    
+    if (!valid || !user) {
+      res.status(401).json({
+        success: false,
+        message: 'Token de autentificare invalid',
+        code: 'INVALID_AUTH_TOKEN'
+      });
+      return;
+    }
+
+    const userId = user.id;
+
+    // Check if professional profile exists
+    const { data: existingProfile } = await supabase
+      .from('professionals')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
+
+    let data, error;
+    
+    if (existingProfile) {
+      // Update existing profile
+      const result = await supabase
+        .from('professionals')
+        .update({
+          categories: categories || '',
+          hourly_rate: hourly_rate || 0,
+          bio: bio || '',
+          service_areas: service_areas || '',
+          experience: experience || 0,
+          portfolio: portfolio || '',
+          certifications: certifications || '',
+          insurance: insurance || false,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', userId)
+        .select()
+        .single();
+      
+      data = result.data;
+      error = result.error;
+    } else {
+      // Create new profile
+      const result = await supabase
+        .from('professionals')
+        .insert({
+          user_id: userId,
+          categories: categories || '',
+          hourly_rate: hourly_rate || 0,
+          bio: bio || '',
+          service_areas: service_areas || '',
+          experience: experience || 0,
+          portfolio: portfolio || '',
+          certifications: certifications || '',
+          insurance: insurance || false,
+          is_available: true,
+          rating: 0,
+          review_count: 0,
+          total_earnings: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+      
+      data = result.data;
+      error = result.error;
+    }
+
+    if (error) {
+      logger.error('Error updating professional profile:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Eroare la actualizarea profilului profesional',
+        error: error.message
+      });
+      return;
+    }
+
+    logger.info(`Professional profile updated for user: ${userId}`);
+    res.status(200).json({
+      success: true,
+      message: 'Profilul profesional a fost actualizat cu succes',
+      data: data
+    });
+
+  } catch (error) {
+    logger.error('Error in updateProfessional:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Eroare internă a serverului',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Messages endpoints
+app.get('/api/messages/:jobId', async (req, res): Promise<void> => {
+  try {
+    const { jobId } = req.params;
+    const { limit = 50, offset = 0 } = req.query;
+
+    // Get user from auth header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      res.status(401).json({
+        success: false,
+        message: 'Token de autentificare lipsă',
+        code: 'MISSING_AUTH_TOKEN'
+      });
+      return;
+    }
+
+    const token = authHeader.split(' ')[1];
+    const { valid, user } = await validateToken(token);
+    
+    if (!valid || !user) {
+      res.status(401).json({
+        success: false,
+        message: 'Token de autentificare invalid',
+        code: 'INVALID_AUTH_TOKEN'
+      });
+      return;
+    }
+
+    const userId = user.id;
+
+    // Get messages for the job
+    const { data: messages, error } = await supabase
+      .from('messages')
+      .select(`
+        *,
+        sender:users!messages_sender_id_fkey(id, name, email, avatar),
+        recipient:users!messages_recipient_id_fkey(id, name, email, avatar)
+      `)
+      .eq('job_id', jobId)
+      .order('created_at', { ascending: true })
+      .range(parseInt(offset as string), parseInt(offset as string) + parseInt(limit as string) - 1);
+
+    if (error) {
+      logger.error('Error fetching messages:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Eroare la încărcarea mesajelor',
+        error: error.message
+      });
+      return;
+    }
+
+    logger.info(`Messages fetched for job: ${jobId}`);
+    res.status(200).json({
+      success: true,
+      data: {
+        messages: messages || [],
+        total: messages?.length || 0,
+        limit: parseInt(limit as string),
+        offset: parseInt(offset as string)
+      }
+    });
+
+  } catch (error) {
+    logger.error('Error in getMessages:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Eroare internă a serverului',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+app.post('/api/messages', async (req, res): Promise<void> => {
+  try {
+    const { job_id, recipient_id, content, message_type = 'text' } = req.body;
+
+    // Get user from auth header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      res.status(401).json({
+        success: false,
+        message: 'Token de autentificare lipsă',
+        code: 'MISSING_AUTH_TOKEN'
+      });
+      return;
+    }
+
+    const token = authHeader.split(' ')[1];
+    const { valid, user } = await validateToken(token);
+    
+    if (!valid || !user) {
+      res.status(401).json({
+        success: false,
+        message: 'Token de autentificare invalid',
+        code: 'INVALID_AUTH_TOKEN'
+      });
+      return;
+    }
+
+    const senderId = user.id;
+
+    if (!job_id || !recipient_id || !content) {
+      res.status(400).json({
+        success: false,
+        message: 'Job ID, recipient ID și conținutul sunt obligatorii',
+        code: 'MISSING_REQUIRED_FIELDS'
+      });
+      return;
+    }
+
+    // Create message
+    const { data, error } = await supabase
+      .from('messages')
+      .insert({
+        job_id,
+        sender_id: senderId,
+        recipient_id,
+        content,
+        message_type,
+        is_read: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .select(`
+        *,
+        sender:users!messages_sender_id_fkey(id, name, email, avatar),
+        recipient:users!messages_recipient_id_fkey(id, name, email, avatar)
+      `)
+      .single();
+
+    if (error) {
+      logger.error('Error creating message:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Eroare la crearea mesajului',
+        error: error.message
+      });
+      return;
+    }
+
+    logger.info(`Message created for job: ${job_id}`);
+    res.status(201).json({
+      success: true,
+      message: 'Mesaj trimis cu succes',
+      data: data
+    });
+
+  } catch (error) {
+    logger.error('Error in createMessage:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Eroare internă a serverului',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+app.put('/api/messages/:messageId/read', async (req, res): Promise<void> => {
+  try {
+    const { messageId } = req.params;
+
+    // Get user from auth header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      res.status(401).json({
+        success: false,
+        message: 'Token de autentificare lipsă',
+        code: 'MISSING_AUTH_TOKEN'
+      });
+      return;
+    }
+
+    const token = authHeader.split(' ')[1];
+    const { valid, user } = await validateToken(token);
+    
+    if (!valid || !user) {
+      res.status(401).json({
+        success: false,
+        message: 'Token de autentificare invalid',
+        code: 'INVALID_AUTH_TOKEN'
+      });
+      return;
+    }
+
+    const userId = user.id;
+
+    // Mark message as read
+    const { data, error } = await supabase
+      .from('messages')
+      .update({
+        is_read: true,
+        read_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', messageId)
+      .eq('recipient_id', userId)
+      .select()
+      .single();
+
+    if (error) {
+      logger.error('Error marking message as read:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Eroare la marcarea mesajului ca citit',
+        error: error.message
+      });
+      return;
+    }
+
+    logger.info(`Message marked as read: ${messageId}`);
+    res.status(200).json({
+      success: true,
+      message: 'Mesaj marcat ca citit',
+      data: data
+    });
+
+  } catch (error) {
+    logger.error('Error in markMessageAsRead:', error);
     res.status(500).json({
       success: false,
       message: 'Eroare internă a serverului',

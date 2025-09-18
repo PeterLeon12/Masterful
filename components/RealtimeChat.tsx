@@ -12,9 +12,9 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRealtimeMessages } from '@/hooks/useSocket';
 import { useApi } from '@/hooks/useApi';
 import { useAuth } from '@/contexts/OptimalAuthContext';
+import { supabaseRealtimeService, Message as SupabaseMessage } from '@/services/supabaseRealtimeService';
 import { logger } from '@/utils/logger';
 
 interface Message {
