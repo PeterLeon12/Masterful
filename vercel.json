@@ -1,9 +1,8 @@
 {
   "version": 2,
-  "buildCommand": "cd backend && npm install && npm run build",
   "builds": [
     {
-      "src": "backend/dist/index.js",
+      "src": "backend/src/simple-supabase.ts",
       "use": "@vercel/node"
     },
     {
@@ -14,11 +13,11 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "backend/dist/index.js"
+      "dest": "backend/src/simple-supabase.ts"
     },
     {
       "src": "/health",
-      "dest": "backend/dist/index.js"
+      "dest": "backend/src/simple-supabase.ts"
     },
     {
       "src": "/(.*)",
@@ -29,7 +28,7 @@
     "NODE_ENV": "production"
   },
   "functions": {
-    "backend/dist/index.js": {
+    "backend/src/simple-supabase.ts": {
       "maxDuration": 30
     }
   }
