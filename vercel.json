@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "functions": {
+    "api/health.ts": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "routes": [
+    {
+      "src": "/api/health",
+      "dest": "/api/health.ts"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/dist/$1"
+    }
+  ]
+}
