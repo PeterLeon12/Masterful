@@ -1,6 +1,7 @@
 {
   "version": 2,
   "buildCommand": "npm run build:web",
+  "outputDirectory": "dist",
   "builds": [
     {
       "src": "backend/src/index.ts",
@@ -8,10 +9,6 @@
       "config": {
         "includeFiles": ["backend/**"]
       }
-    },
-    {
-      "src": "dist/**",
-      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -21,7 +18,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "dist/$1"
+      "dest": "/index.html"
     }
   ],
   "env": {
