@@ -1,7 +1,7 @@
 // Environment configuration
 export const ENV = {
   // API Configuration
-  API_BASE_URL: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api',
+  API_BASE_URL: process.env.EXPO_PUBLIC_API_URL || 'https://masterful-rd1ii1bye-peterleon12s-projects.vercel.app/api',
   API_TIMEOUT: 10000, // 10 seconds
   
   // App Configuration
@@ -67,7 +67,7 @@ if (ENV.IS_DEVELOPMENT) {
 }
 
 if (ENV.IS_PRODUCTION) {
-  ENV.API_BASE_URL = 'https://api.masterful.app/api';
+  ENV.API_BASE_URL = 'https://masterful-rd1ii1bye-peterleon12s-projects.vercel.app/api';
   ENV.ENABLE_DEBUG_MODE = false;
 }
 
