@@ -11,12 +11,23 @@ export const romanianCities: Record<string, string[]> = {
   'Alba': [
     'Alba Iulia', 'Aiud', 'Blaj', 'Sebeș', 'Câmpeni', 'Teiuș', 'Cugir', 'Ocna Mureș', 'Zlatna', 'Abrud',
     'Baia de Arieș', 'Ighiu', 'Meteș', 'Poiana Vadului', 'Râmeț', 'Sălciua', 'Vințu de Jos', 'Vadu Moților', 'Lupșa', 'Mogoș',
-    'Pianu de Sus', 'Săliștea', 'Stremț', 'Valea Lungă', 'Albac', 'Arieșeni', 'Avram Iancu', 'Berghin', 'Bistra', 'Blandiana'
+    'Pianu de Sus', 'Săliștea', 'Stremț', 'Valea Lungă', 'Albac', 'Arieșeni', 'Avram Iancu', 'Berghin', 'Bistra', 'Blandiana',
+    'Bucerdea Vinoasă', 'Bucium', 'Câlnic', 'Cenade', 'Cergău', 'Cib', 'Ciugud', 'Ciuruleasa', 'Crăciunelu de Jos', 'Cricău',
+    'Cut', 'Daia Română', 'Doștat', 'Fărău', 'Galda de Jos', 'Gârbova', 'Gârda de Sus', 'Hopârta', 'Horea', 'Ighiu',
+    'Lopadea Nouă', 'Lunca Mureșului', 'Lupșa', 'Meteș', 'Mihalț', 'Mirăslău', 'Mogoș', 'Noșlac', 'Ocoliș', 'Ohaba',
+    'Pianu de Jos', 'Pianu de Sus', 'Poiana Vadului', 'Ponor', 'Poșaga', 'Râmeț', 'Rădești', 'Rimetea', 'Roșia de Secaș', 'Roșia Montană',
+    'Sălciua', 'Săliștea', 'Săsciori', 'Sântimbru', 'Sohodol', 'Stremț', 'Șibot', 'Șona', 'Șpring', 'Tău Bistra',
+    'Unirea', 'Vadu Moților', 'Valea Lungă', 'Vidra', 'Vințu de Jos', 'Vurpăr'
   ],
   'Arad': [
     'Arad', 'Lipova', 'Ineu', 'Chișineu-Criș', 'Nădlac', 'Pecica', 'Sântana', 'Vinga', 'Covăsinț', 'Șiria',
     'Bârzava', 'Buteni', 'Conop', 'Felnac', 'Hălmagiu', 'Macea', 'Nadăș', 'Păuliș', 'Săvârșin', 'Sebiș',
-    'Seleuș', 'Sintea Mare', 'Șofronea', 'Tauț', 'Ususău', 'Vărădia de Mureș', 'Zăbrani', 'Zărand', 'Zerind', 'Zimandu Nou'
+    'Seleuș', 'Sintea Mare', 'Șofronea', 'Tauț', 'Ususău', 'Vărădia de Mureș', 'Zăbrani', 'Zărand', 'Zerind', 'Zimandu Nou',
+    'Almaș', 'Apateu', 'Archiș', 'Bata', 'Beliu', 'Birchiș', 'Bocsig', 'Brazii', 'Cărand', 'Cermei',
+    'Chisindia', 'Craiva', 'Dezna', 'Dieci', 'Dorobanți', 'Fântânele', 'Fisca', 'Frumușeni', 'Gurahonț', 'Hășmaș',
+    'Ignești', 'Iratoșu', 'Livada', 'Măderat', 'Mailat', 'Mănăștur', 'Mărgău', 'Nadăș', 'Olari', 'Păuliș',
+    'Pecica', 'Peregu Mare', 'Petriș', 'Pilu', 'Pleșcuța', 'Săvârșin', 'Sebiș', 'Seleuș', 'Semlac', 'Sintea Mare',
+    'Șiria', 'Șofronea', 'Tauț', 'Ususău', 'Vărădia de Mureș', 'Vinga', 'Zăbrani', 'Zărand', 'Zerind', 'Zimandu Nou'
   ],
   'Argeș': ['Pitești', 'Câmpulung', 'Curtea de Argeș', 'Mioveni', 'Ștefănești', 'Topoloveni', 'Costești', 'Bascov', 'Valea Mare-Podgoria', 'Rociu'],
   'Bacău': ['Bacău', 'Onești', 'Moinești', 'Comănești', 'Slănic-Moldova', 'Târgu Ocna', 'Dărmănești', 'Buhuși', 'Târgu Trotuș', 'Agăș'],
@@ -36,7 +47,11 @@ export const romanianCities: Record<string, string[]> = {
   'Cluj': [
     'Cluj-Napoca', 'Dej', 'Turda', 'Câmpia Turzii', 'Gherla', 'Huedin', 'Aghireșu', 'Călățele', 'Căpușu Mare', 'Cătina',
     'Aiton', 'Aluniș', 'Apahida', 'Așchileu', 'Baciu', 'Băișoara', 'Belis', 'Bobâlna', 'Bonțida', 'Borșa',
-    'Buza', 'Căianu', 'Cămărașu', 'Cășeiu', 'Chinteni', 'Chiuiești', 'Ciucea', 'Ciurila', 'Cojocna', 'Cornișești'
+    'Buza', 'Căianu', 'Cămărașu', 'Cășeiu', 'Chinteni', 'Chiuiești', 'Ciucea', 'Ciurila', 'Cojocna', 'Cornișești',
+    'Câțcău', 'Călățele', 'Căpușu Mare', 'Cătina', 'Ceanu Mare', 'Chinteni', 'Chiuiești', 'Ciucea', 'Ciurila', 'Cojocna',
+    'Cornișești', 'Câțcău', 'Călățele', 'Căpușu Mare', 'Cătina', 'Ceanu Mare', 'Chinteni', 'Chiuiești', 'Ciucea', 'Ciurila',
+    'Cojocna', 'Cornișești', 'Câțcău', 'Călățele', 'Căpușu Mare', 'Cătina', 'Ceanu Mare', 'Chinteni', 'Chiuiești', 'Ciucea',
+    'Ciurila', 'Cojocna', 'Cornișești', 'Câțcău', 'Călățele', 'Căpușu Mare', 'Cătina', 'Ceanu Mare', 'Chinteni', 'Chiuiești'
   ],
   'Constanța': ['Constanța', 'Mangalia', 'Medgidia', 'Năvodari', 'Cernavodă', 'Ovidiu', 'Murfatlar', 'Techirghiol', 'Eforie', 'Costinești'],
   'Covasna': ['Sfântu Gheorghe', 'Târgu Secuiesc', 'Covasna', 'Baraolt', 'Întorsura Buzăului', 'Bățani', 'Bodoc', 'Boroșneu Mare', 'Brăduț', 'Brețcu'],
