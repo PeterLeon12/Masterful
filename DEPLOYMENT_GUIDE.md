@@ -2,20 +2,12 @@
 
 ## 📋 **PRE-DEPLOYMENT CHECKLIST**
 
-### ✅ **1. STRIPE SETUP**
-1. Go to [Stripe Dashboard](https://dashboard.stripe.com/test/apikeys)
-2. Copy your test keys:
-   - **Publishable key**: `pk_test_...`
-   - **Secret key**: `sk_test_...`
-3. Update `backend/env.local` with your keys
-4. Test payments locally
-
-### ✅ **2. SUPABASE SETUP**
+### ✅ **1. SUPABASE SETUP**
 1. Go to [Supabase Dashboard](https://supabase.com/dashboard)
 2. Copy your project URL and anon key
 3. Update `.env` with your Supabase credentials
 
-### ✅ **3. EXPO DEPLOYMENT**
+### ✅ **2. EXPO DEPLOYMENT**
 
 #### **Option A: Expo Web (Recommended for Web)**
 ```bash
@@ -64,18 +56,14 @@ expo publish
 EXPO_PUBLIC_API_URL=https://your-app.expo.dev/api
 EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 ```
 
 ### **Backend (Expo Functions Environment)**
 ```
 NODE_ENV=production
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_PUBLISHABLE_KEY=pk_test_...
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-JWT_SECRET=your-jwt-secret
 ```
 
 ## 🧪 **TESTING AFTER DEPLOYMENT**
@@ -83,8 +71,7 @@ JWT_SECRET=your-jwt-secret
 1. **Test Authentication**: Register/Login
 2. **Test Job Posting**: Create a job
 3. **Test Search**: Search for professionals
-4. **Test Payments**: Try Stripe integration
-5. **Test Chat**: Send messages
+4. **Test Chat**: Send messages
 
 ## 📱 **MOBILE DEPLOYMENT**
 

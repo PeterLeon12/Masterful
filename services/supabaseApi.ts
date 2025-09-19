@@ -109,6 +109,32 @@ export interface Message {
   };
 }
 
+export interface JobApplication {
+  id: string;
+  job_id: string;
+  professional_id: string;
+  proposal: string;
+  price: number;
+  estimated_time: string;
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'WITHDRAWN';
+  created_at: string;
+  updated_at: string;
+  professional?: {
+    id: string;
+    name: string;
+    email: string;
+    avatar?: string;
+  };
+  professional_profile?: {
+    id: string;
+    hourly_rate: number;
+    rating: number;
+    review_count: number;
+    bio?: string;
+    categories: string;
+  };
+}
+
 // Supabase API Client
 class SupabaseApiClient {
   private async getAuthToken(): Promise<string | null> {
@@ -981,6 +1007,106 @@ class SupabaseApiClient {
     }
   }
 
+  // Job Details
+  async getJobById(jobId: string): Promise<ApiResponse<Job>> {
+    try {
+      const { data, error } = await supabase
+        .from('jobs')
+        .select(`
+          *,
+          client:users!jobs_client_id_fkey(id, name, email, avatar),
+          professional:users!jobs_professional_id_fkey(id, name, email, avatar)
+        `)
+        .eq('id', jobId)
+        .single();
+
+      if (error) {
+        return {
+          success: false,
+          error: error.message,
+        };
+      }
+
+      return {
+        success: true,
+        data: data as Job,
+      };
+    } catch (error) {
+      console.error('Error fetching job:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch job',
+      };
+    }
+  }
+
+  // Job Applications
+  async getJobApplications(jobId: string): Promise<ApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('job_applications')
+        .select(`
+          *,
+          professional:users!job_applications_professional_id_fkey(id, name, email, avatar),
+          professional_profile:professionals!job_applications_professional_id_fkey(
+            id, hourly_rate, rating, review_count, bio, categories
+          )
+        `)
+        .eq('job_id', jobId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        return {
+          success: false,
+          error: error.message,
+        };
+      }
+
+      return {
+        success: true,
+        data: data || [],
+      };
+    } catch (error) {
+      console.error('Error fetching job applications:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch job applications',
+      };
+    }
+  }
+
+  // Professional Details
+  async getProfessional(professionalId: string): Promise<ApiResponse<Professional>> {
+    try {
+      const { data, error } = await supabase
+        .from('professionals')
+        .select(`
+          *,
+          user:users!professionals_user_id_fkey(id, name, email, phone, avatar)
+        `)
+        .eq('id', professionalId)
+        .single();
+
+      if (error) {
+        return {
+          success: false,
+          error: error.message,
+        };
+      }
+
+      return {
+        success: true,
+        data: data as Professional,
+      };
+    } catch (error) {
+      console.error('Error fetching professional:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch professional',
+      };
+    }
+  }
+
   // Profile
   async getProfile(): Promise<ApiResponse<User>> {
     try {
@@ -1094,6 +1220,75 @@ class SupabaseApiClient {
         error: error instanceof Error ? error.message : 'Failed to update profile',
       };
     }
+  }
+
+  // File Upload
+  async uploadFile(filePath: string, base64Data: string, mimeType: string): Promise<ApiResponse<{ url: string }>> {
+    try {
+      const { data, error } = await supabase.storage
+        .from('files')
+        .upload(filePath, this.base64ToBlob(base64Data, mimeType), {
+          contentType: mimeType,
+        });
+
+      if (error) {
+        return {
+          success: false,
+          error: error.message,
+        };
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('files')
+        .getPublicUrl(filePath);
+
+      return {
+        success: true,
+        data: { url: urlData.publicUrl },
+      };
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to upload file',
+      };
+    }
+  }
+
+  async deleteFile(filePath: string): Promise<ApiResponse<void>> {
+    try {
+      const { error } = await supabase.storage
+        .from('files')
+        .remove([filePath]);
+
+      if (error) {
+        return {
+          success: false,
+          error: error.message,
+        };
+      }
+
+      return {
+        success: true,
+        data: undefined,
+      };
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to delete file',
+      };
+    }
+  }
+
+  private base64ToBlob(base64: string, mimeType: string): Blob {
+    const byteCharacters = atob(base64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    return new Blob([byteArray], { type: mimeType });
   }
 }
 

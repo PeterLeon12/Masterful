@@ -18,7 +18,6 @@ Masterful is a full-stack marketplace application built with React Native and Ex
 - **Job Posting** with detailed descriptions
 - **Service Categories** (Plumbing, Electrical, Cleaning, etc.)
 - **Location-based Search** with Romanian cities
-- **Budget Setting** and negotiation
 - **Job Application System**
 
 ### 👨‍💼 **Professional Profiles**
@@ -41,14 +40,13 @@ Masterful is a full-stack marketplace application built with React Native and Ex
 - **Category Filtering** by service type
 - **Location Filtering** by city/county
 - **Rating Filtering** by professional ratings
-- **Price Range** filtering
 - **Availability** filtering
 
-### 💳 **Payment Integration**
-- **Stripe Integration** for secure payments
-- **Subscription Plans** (coming soon)
-- **Payment History** tracking
-- **Stripe Connect** for professionals
+### 💳 **Subscription Model**
+- **7-day Free Trial** for all users
+- **Monthly/Yearly Plans** for premium access
+- **Unlimited Job Posting** for subscribers
+- **Priority Support** for subscribers
 
 ### 🗺️ **Location Services**
 - **Romanian Cities** database (15,000+ locations)

@@ -4,7 +4,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/OptimalAuthContext';
 import { serviceCategories } from '@/constants/service-categories';
 import EnhancedLocationPicker from '@/components/EnhancedLocationPicker';
-import { DollarSign } from 'lucide-react-native';
 import { supabaseApiClient } from '@/services/supabaseApi';
 import { useApiError } from '@/hooks/useApiError';
 
@@ -21,7 +20,6 @@ export default function PostJobScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<Location | undefined>();
-  const [budget, setBudget] = useState('');
   const [urgency, setUrgency] = useState<'low' | 'medium' | 'high'>('medium');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -42,7 +40,7 @@ export default function PostJobScreen() {
   const selectedCategoryData = serviceCategories.find(cat => cat.id === selectedCategory);
 
   const handleSubmit = async () => {
-    if (!title || !description || !selectedCategory || !selectedLocation || !budget) {
+    if (!title || !description || !selectedCategory || !selectedLocation) {
       Alert.alert('Eroare', 'Te rog completează toate câmpurile obligatorii');
       return;
     }
@@ -65,11 +63,6 @@ export default function PostJobScreen() {
           county: selectedLocation.county,
           city: selectedLocation.city
         }),
-        budget: JSON.stringify({
-          min: parseInt(budget),
-          max: parseInt(budget) + 100,
-          currency: 'RON'
-        }),
         priority: urgency.toUpperCase() as 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT'
       };
 
@@ -89,7 +82,6 @@ export default function PostJobScreen() {
             setSelectedCategory(null);
             setSelectedSubcategory(null);
             setSelectedLocation(undefined);
-            setBudget('');
             setUrgency('medium');
           }}]
         );
@@ -198,7 +190,7 @@ export default function PostJobScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Locație și buget</Text>
+          <Text style={styles.sectionTitle}>Locație</Text>
           
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Locație *</Text>
@@ -207,21 +199,6 @@ export default function PostJobScreen() {
               onLocationSelect={setSelectedLocation}
               placeholder="Selectează locația"
             />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Buget estimat *</Text>
-            <View style={styles.budgetContainer}>
-              <DollarSign size={20} color="#6b7280" />
-              <TextInput
-                style={styles.budgetInput}
-                placeholder="ex. 150"
-                value={budget}
-                onChangeText={setBudget}
-                keyboardType="numeric"
-              />
-              <Text style={styles.currency}>RON</Text>
-            </View>
           </View>
         </View>
 
@@ -386,27 +363,6 @@ const styles = StyleSheet.create({
   },
   subcategoryTextSelected: {
     color: '#ffffff',
-  },
-  budgetContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f8fafc',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  budgetInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#111827',
-    marginLeft: 8,
-  },
-  currency: {
-    fontSize: 16,
-    color: '#6b7280',
-    fontWeight: '500',
   },
   urgencyContainer: {
     gap: 12,

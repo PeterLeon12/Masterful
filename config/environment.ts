@@ -4,6 +4,9 @@ export const ENV = {
   API_BASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://cjvrtumhlvbmuryremlw.supabase.co',
   API_TIMEOUT: 10000, // 10 seconds
   
+  // Stripe Configuration
+  STRIPE_PUBLISHABLE_KEY: process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_REPLACE_WITH_YOUR_STRIPE_PUBLISHABLE_KEY',
+  
   // App Configuration
   APP_NAME: 'Masterful',
   APP_VERSION: '1.0.0',
@@ -13,9 +16,6 @@ export const ENV = {
   ENABLE_ANALYTICS: process.env.EXPO_PUBLIC_ENABLE_ANALYTICS === 'true',
   ENABLE_CRASH_REPORTING: process.env.EXPO_PUBLIC_ENABLE_CRASH_REPORTING === 'true',
   
-  // Payment Configuration
-  STRIPE_PUBLISHABLE_KEY: process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_REPLACE_WITH_YOUR_STRIPE_PUBLISHABLE_KEY',
-  ENABLE_IN_APP_PURCHASES: process.env.EXPO_PUBLIC_ENABLE_IN_APP_PURCHASES === 'true',
   
   // Maps & Location
   GOOGLE_MAPS_API_KEY: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || '',

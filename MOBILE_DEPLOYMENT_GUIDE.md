@@ -1,18 +1,18 @@
-# 📱 MOBILE DEPLOYMENT GUIDE - EXPO + STRIPE + SUPABASE
+# 📱 MOBILE DEPLOYMENT GUIDE - EXPO + SUPABASE
 
 ## 🎯 **OVERVIEW**
 
-This guide shows you how to deploy your Masterful app to iOS and Android using **Expo + Stripe + Supabase** - no custom backend required!
+This guide shows you how to deploy your Masterful app to iOS and Android using **Expo + Supabase** - no custom backend required!
 
 ## ✅ **WHAT YOU GET**
 
 - **iOS App** - Native iOS app via App Store
 - **Android App** - Native Android app via Google Play
 - **Real-time Chat** - Powered by Supabase Realtime
-- **Payments** - Powered by Stripe Mobile SDK
 - **Database** - Powered by Supabase PostgreSQL
 - **Authentication** - Powered by Supabase Auth
 - **File Storage** - Powered by Supabase Storage
+- **Subscription Model** - 7-day free trial + premium plans
 
 ## 🚀 **QUICK START**
 
@@ -48,13 +48,12 @@ Your app is configured with these environment variables in `eas.json`:
 }
 ```
 
-### **Stripe Configuration**
+### **Subscription Configuration**
 
-1. **Get your Stripe keys** from [Stripe Dashboard](https://dashboard.stripe.com/test/apikeys)
-2. **Update `config/environment.ts`**:
-   ```typescript
-   STRIPE_PUBLISHABLE_KEY: process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_your_key_here'
-   ```
+The app uses a subscription model with:
+- **7-day free trial** for all new users
+- **Monthly plan**: €29.99/month
+- **Yearly plan**: €299.99/year (2 months free)
 
 ### **Supabase Configuration**
 
@@ -79,11 +78,11 @@ Your Supabase is already configured:
 - ✅ **Message History** - Persistent storage
 - ✅ **Push Notifications** - Expo Notifications
 
-### **Payments**
-- ✅ **Stripe Integration** - Mobile-optimized
-- ✅ **Payment Sheets** - Native iOS/Android UI
-- ✅ **Multiple Payment Methods** - Cards, Apple Pay, Google Pay
-- ✅ **Secure Processing** - PCI compliant
+### **Subscriptions**
+- ✅ **Free Trial** - 7 days for all users
+- ✅ **Subscription Plans** - Monthly and yearly options
+- ✅ **Premium Features** - Unlimited access for subscribers
+- ✅ **Easy Management** - Simple subscription management
 
 ### **Database Operations**
 - ✅ **Jobs Management** - Create, read, update, delete

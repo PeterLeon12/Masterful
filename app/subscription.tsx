@@ -1,289 +1,282 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/OptimalAuthContext';
-import { Check, Crown, Star, Zap } from 'lucide-react-native';
-
-interface SubscriptionPlan {
-  id: string;
-  name: string;
-  price: number;
-  period: string;
-  icon: string;
-  color: string;
-  features: string[];
-  popular?: boolean;
-}
+import { Check, Crown, Star, Zap, ArrowLeft } from 'lucide-react-native';
+import { stripeService, SUBSCRIPTION_PLANS } from '@/services/stripeService';
 
 export default function SubscriptionScreen() {
   const { user } = useAuth();
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly');
   const [isLoading, setIsLoading] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<any>(null);
 
-  const isClient = user?.role === 'CLIENT';
+  useEffect(() => {
+    loadSubscriptionStatus();
+  }, []);
 
-  const clientPlans: SubscriptionPlan[] = [
-    {
-      id: 'client-basic',
-      name: 'Basic',
-      price: 0,
+  const loadSubscriptionStatus = async () => {
+    if (!user?.id) return;
+    
+    const result = await stripeService.getSubscriptionStatus(user.id);
+    if (result.success) {
+      setSubscriptionStatus(result.subscription);
+    }
+  };
+
+  const plans = {
+    monthly: {
+      price: '29.99',
       period: 'lună',
-      icon: '🏠',
-      color: '#6b7280',
-      features: [
-        '3 sarcini postate pe lună',
-        'Căutare de bază',
-        'Mesaje cu meșterii',
-        'Suport email',
-      ],
+      savings: null
+    },
+    yearly: {
+      price: '299.99',
+      period: 'an',
+      savings: '2 luni gratuite'
+    }
+  };
+
+  const features = [
+    {
+      icon: <Zap size={20} color="#10B981" />,
+      title: 'Acces nelimitat la profesioniști',
+      description: 'Caută și contactează oricâți profesioniști dorești'
     },
     {
-      id: 'client-premium',
-      name: 'Premium',
-      price: 29,
-      period: 'lună',
-      icon: '⭐',
-      color: '#3b82f6',
-      popular: true,
-      features: [
-        'Sarcini nelimitate',
-        'Căutare avansată cu filtre',
-        'Prioritate în rezultate',
-        'Mesaje nelimitate',
-        'Suport prioritar',
-        'Statistici detaliate',
-      ],
+      icon: <Crown size={20} color="#F59E0B" />,
+      title: 'Postări de joburi nelimitate',
+      description: 'Publică câte joburi vrei, fără restricții'
     },
     {
-      id: 'client-business',
-      name: 'Business',
-      price: 79,
-      period: 'lună',
-      icon: '👑',
-      color: '#f59e0b',
-      features: [
-        'Tot din Premium',
-        'Manager de cont dedicat',
-        'Facturare automată',
-        'Rapoarte personalizate',
-        'API access',
-        'Suport telefonic 24/7',
-      ],
+      icon: <Star size={20} color="#8B5CF6" />,
+      title: 'Mesagerie în timp real',
+      description: 'Comunică instant cu profesioniștii'
     },
+    {
+      icon: <Check size={20} color="#10B981" />,
+      title: 'Suport prioritar',
+      description: 'Asistență dedicată pentru abonați'
+    },
+    {
+      icon: <Zap size={20} color="#10B981" />,
+      title: 'Notificări avansate',
+      description: 'Primești notificări pentru joburi relevante'
+    },
+    {
+      icon: <Crown size={20} color="#F59E0B" />,
+      title: 'Statistici detaliate',
+      description: 'Urmărește performanța joburilor tale'
+    }
   ];
 
-  const professionalPlans: SubscriptionPlan[] = [
-    {
-      id: 'pro-starter',
-      name: 'Starter',
-      price: 0,
-      period: 'lună',
-      icon: '🔧',
-      color: '#6b7280',
-      features: [
-        '5 aplicări pe lună',
-        'Profil de bază',
-        'Mesaje cu clienții',
-        'Comision 15% per proiect',
-      ],
-    },
-    {
-      id: 'pro-professional',
-      name: 'Professional',
-      price: 49,
-      period: 'lună',
-      icon: '⚡',
-      color: '#3b82f6',
-      popular: true,
-      features: [
-        'Aplicări nelimitate',
-        'Profil premium cu badge',
-        'Prioritate în căutări',
-        'Comision redus 10%',
-        'Statistici avansate',
-        'Suport prioritar',
-      ],
-    },
-    {
-      id: 'pro-expert',
-      name: 'Expert',
-      price: 99,
-      period: 'lună',
-      icon: '👑',
-      color: '#f59e0b',
-      features: [
-        'Tot din Professional',
-        'Badge "Expert verificat"',
-        'Promovare în top rezultate',
-        'Comision minim 5%',
-        'Manager de cont dedicat',
-        'Cursuri de dezvoltare',
-        'Suport telefonic 24/7',
-      ],
-    },
-  ];
-
-  const plans = isClient ? clientPlans : professionalPlans;
-
-  const handleSubscribe = async (planId: string) => {
-    if (planId.includes('basic') || planId.includes('starter')) {
-      Alert.alert(
-        'Plan gratuit',
-        'Ești deja pe planul gratuit!',
-        [{ text: 'OK' }]
-      );
+  const handleSubscribe = async () => {
+    if (!user?.id) {
+      Alert.alert('Eroare', 'Trebuie să fii autentificat pentru a te abona.');
       return;
     }
 
     setIsLoading(true);
     try {
-      // TODO: Implement real subscription API call
-      // For now, we'll show a message that this feature is coming soon
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Create Stripe checkout session
+      const result = await stripeService.createCheckoutSession(selectedPlan, user.id);
       
-      Alert.alert(
-        'Funcționalitate în dezvoltare',
-        'Integrarea cu Stripe pentru plăți va fi disponibilă în curând. Mulțumim pentru răbdare!',
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
-    } catch {
-      Alert.alert('Eroare', 'Nu s-a putut activa abonamentul. Te rog încearcă din nou.');
+      if (result.success && result.sessionId) {
+        // Redirect to Stripe checkout
+        const redirectResult = await stripeService.redirectToCheckout(result.sessionId);
+        
+        if (redirectResult.success) {
+          // Success - user will be redirected to Stripe
+          return;
+        } else {
+          Alert.alert('Eroare', redirectResult.error || 'Nu am putut redirecționa către plata Stripe.');
+        }
+      } else {
+        Alert.alert('Eroare', result.error || 'Nu am putut crea sesiunea de plată.');
+      }
+    } catch (error) {
+      console.error('Subscription error:', error);
+      Alert.alert('Eroare', 'Nu am putut procesa abonamentul. Încearcă din nou.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const renderPlanCard = (plan: SubscriptionPlan) => (
-    <View
-      key={plan.id}
-      style={[
-        styles.planCard,
-        plan.popular && styles.planCardPopular,
-        selectedPlan === plan.id && styles.planCardSelected
-      ]}
-    >
-      {plan.popular && (
-        <View style={styles.popularBadge}>
-          <Star size={12} color="#ffffff" fill="#ffffff" />
-          <Text style={styles.popularText}>Cel mai popular</Text>
-        </View>
-      )}
+  const handleManageSubscription = async () => {
+    if (!user?.id) return;
 
-      <View style={styles.planHeader}>
-        <Text style={styles.planIcon}>{plan.icon}</Text>
-        <Text style={styles.planName}>{plan.name}</Text>
-        
-        <View style={styles.priceContainer}>
-          <Text style={styles.price}>
-            {plan.price === 0 ? 'Gratuit' : `${plan.price} RON`}
-          </Text>
-          {plan.price > 0 && (
-            <Text style={styles.period}>/{plan.period}</Text>
-          )}
-        </View>
-      </View>
+    setIsLoading(true);
+    try {
+      const result = await stripeService.createCustomerPortalSession(user.id);
+      
+      if (result.success && result.url) {
+        // Open customer portal in browser
+        // In a real app, you'd use Linking.openURL(result.url)
+        Alert.alert('Portal Client', 'Portalul de gestionare a abonamentului va fi deschis în browser.');
+      } else {
+        Alert.alert('Eroare', result.error || 'Nu am putut deschide portalul de gestionare.');
+      }
+    } catch (error) {
+      console.error('Portal error:', error);
+      Alert.alert('Eroare', 'Nu am putut deschide portalul de gestionare.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-      <View style={styles.featuresContainer}>
-        {plan.features.map((feature, index) => (
-          <View key={index} style={styles.feature}>
-            <Check size={16} color="#10b981" />
-            <Text style={styles.featureText}>{feature}</Text>
-          </View>
-        ))}
-      </View>
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <TouchableOpacity 
+        style={styles.backButton} 
+        onPress={() => router.back()}
+      >
+        <ArrowLeft size={24} color="#374151" />
+      </TouchableOpacity>
+      <Text style={styles.headerTitle}>Abonament Masterful</Text>
+      <View style={styles.placeholder} />
+    </View>
+  );
 
+  const renderTrialBanner = () => (
+    <View style={styles.trialBanner}>
+      <Text style={styles.trialTitle}>🎉 7 ZILE GRATUITE!</Text>
+      <Text style={styles.trialSubtitle}>
+        Testează toate funcționalitățile premium fără costuri
+      </Text>
+    </View>
+  );
+
+  const renderPlanSelector = () => (
+    <View style={styles.planSelector}>
       <TouchableOpacity
         style={[
-          styles.selectButton,
-          plan.popular && styles.selectButtonPopular,
-          selectedPlan === plan.id && styles.selectButtonSelected
+          styles.planOption,
+          selectedPlan === 'monthly' && styles.planOptionSelected
         ]}
-        onPress={() => {
-          setSelectedPlan(plan.id);
-          handleSubscribe(plan.id);
-        }}
-        disabled={isLoading}
+        onPress={() => setSelectedPlan('monthly')}
       >
         <Text style={[
-          styles.selectButtonText,
-          plan.popular && styles.selectButtonTextPopular,
-          selectedPlan === plan.id && styles.selectButtonTextSelected
+          styles.planOptionText,
+          selectedPlan === 'monthly' && styles.planOptionTextSelected
         ]}>
-          {plan.price === 0 ? 'Plan actual' : 'Selectează planul'}
+          Lunar
         </Text>
       </TouchableOpacity>
+      
+      <TouchableOpacity
+        style={[
+          styles.planOption,
+          selectedPlan === 'yearly' && styles.planOptionSelected
+        ]}
+        onPress={() => setSelectedPlan('yearly')}
+      >
+        <Text style={[
+          styles.planOptionText,
+          selectedPlan === 'yearly' && styles.planOptionTextSelected
+        ]}>
+          Anual
+        </Text>
+        {plans.yearly.savings && (
+          <Text style={styles.savingsText}>{plans.yearly.savings}</Text>
+        )}
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderPricing = () => (
+    <View style={styles.pricingContainer}>
+      <View style={styles.priceRow}>
+        <Text style={styles.price}>€{plans[selectedPlan].price}</Text>
+        <Text style={styles.period}>/{plans[selectedPlan].period}</Text>
+      </View>
+      <Text style={styles.priceDescription}>
+        Facturare {selectedPlan === 'monthly' ? 'lunară' : 'anuală'}
+      </Text>
+    </View>
+  );
+
+  const renderFeatures = () => (
+    <View style={styles.featuresContainer}>
+      <Text style={styles.featuresTitle}>Ce primești cu abonamentul:</Text>
+      {features.map((feature, index) => (
+        <View key={index} style={styles.featureItem}>
+          <View style={styles.featureIcon}>
+            {feature.icon}
+          </View>
+          <View style={styles.featureContent}>
+            <Text style={styles.featureTitle}>{feature.title}</Text>
+            <Text style={styles.featureDescription}>{feature.description}</Text>
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+
+  const renderSubscribeButton = () => {
+    if (subscriptionStatus?.status === 'active') {
+      return (
+        <View style={styles.subscriptionActiveContainer}>
+          <View style={styles.activeSubscriptionInfo}>
+            <Text style={styles.activeSubscriptionTitle}>Abonament Activ</Text>
+            <Text style={styles.activeSubscriptionPlan}>
+              Plan: {subscriptionStatus.plan === 'monthly' ? 'Lunar' : 'Anual'}
+            </Text>
+            {subscriptionStatus.current_period_end && (
+              <Text style={styles.activeSubscriptionEnd}>
+                Expiră: {new Date(subscriptionStatus.current_period_end).toLocaleDateString()}
+              </Text>
+            )}
+          </View>
+          <TouchableOpacity 
+            style={styles.manageButton} 
+            onPress={handleManageSubscription}
+            disabled={isLoading}
+          >
+            <Text style={styles.manageButtonText}>
+              {isLoading ? 'Se încarcă...' : 'Gestionează Abonamentul'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    return (
+      <TouchableOpacity 
+        style={styles.subscribeButton} 
+        onPress={handleSubscribe}
+        disabled={isLoading}
+      >
+        <Text style={styles.subscribeButtonText}>
+          {isLoading ? 'Se procesează...' : 'Începe perioada de probă gratuită'}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderTerms = () => (
+    <View style={styles.termsContainer}>
+      <Text style={styles.termsText}>
+        Prin continuare, accepti{' '}
+        <Text style={styles.termsLink}>Termenii și Condițiile</Text>
+        {' '}și{' '}
+        <Text style={styles.termsLink}>Politica de Confidențialitate</Text>
+        . Perioada de probă de 7 zile este gratuită. După aceea, vei fi facturat automat.
+      </Text>
     </View>
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Planuri de abonament</Text>
-        <Text style={styles.subtitle}>
-          {isClient 
-            ? 'Alege planul potrivit pentru proiectele tale'
-            : 'Dezvoltă-ți afacerea cu planurile noastre'
-          }
-        </Text>
-      </View>
-
+      {renderHeader()}
+      
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.roleIndicator}>
-          <Text style={styles.roleText}>
-            {isClient ? '🏠 Planuri pentru clienți' : '🔧 Planuri pentru meșteri'}
-          </Text>
-        </View>
-
-        <View style={styles.plansContainer}>
-          {plans.map(renderPlanCard)}
-        </View>
-
-        <View style={styles.benefits}>
-          <Text style={styles.benefitsTitle}>De ce să alegi un plan premium?</Text>
-          
-          <View style={styles.benefitsList}>
-            <View style={styles.benefit}>
-              <Zap size={20} color="#3b82f6" />
-              <View style={styles.benefitContent}>
-                <Text style={styles.benefitTitle}>Acces prioritar</Text>
-                <Text style={styles.benefitDescription}>
-                  {isClient 
-                    ? 'Sarcinile tale apar primele în căutările meșterilor'
-                    : 'Profilul tău apare primul în rezultatele căutărilor'
-                  }
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.benefit}>
-              <Crown size={20} color="#f59e0b" />
-              <View style={styles.benefitContent}>
-                <Text style={styles.benefitTitle}>Badge premium</Text>
-                <Text style={styles.benefitDescription}>
-                  Distinge-te cu badge-uri speciale care inspiră încredere
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.benefit}>
-              <Star size={20} color="#10b981" />
-              <View style={styles.benefitContent}>
-                <Text style={styles.benefitTitle}>Suport prioritar</Text>
-                <Text style={styles.benefitDescription}>
-                  Răspuns rapid la întrebări și suport dedicat
-                </Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            Poți anula abonamentul oricând din setările contului.{'\n'}
-            Toate planurile includ o perioadă de probă de 7 zile.
-          </Text>
-        </View>
+        {renderTrialBanner()}
+        {renderPlanSelector()}
+        {renderPricing()}
+        {renderFeatures()}
+        {renderSubscribeButton()}
+        {renderTerms()}
       </ScrollView>
     </SafeAreaView>
   );
@@ -292,189 +285,217 @@ export default function SubscriptionScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#f8fafc',
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 24,
+    paddingVertical: 16,
+    backgroundColor: '#ffffff',
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 8,
+  backButton: {
+    padding: 8,
   },
-  subtitle: {
-    fontSize: 16,
-    color: '#6b7280',
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  placeholder: {
+    width: 40,
   },
   content: {
     flex: 1,
   },
-  roleIndicator: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-  },
-  roleText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#3b82f6',
-    textAlign: 'center',
-  },
-  plansContainer: {
-    paddingHorizontal: 20,
-    gap: 16,
-  },
-  planCard: {
-    backgroundColor: '#f8fafc',
-    borderWidth: 2,
-    borderColor: '#e5e7eb',
-    borderRadius: 16,
+  trialBanner: {
+    backgroundColor: '#10B981',
+    margin: 20,
     padding: 20,
-    position: 'relative',
-  },
-  planCardPopular: {
-    borderColor: '#3b82f6',
-    backgroundColor: '#eff6ff',
-  },
-  planCardSelected: {
-    borderColor: '#10b981',
-    backgroundColor: '#f0fdf4',
-  },
-  popularBadge: {
-    position: 'absolute',
-    top: -8,
-    left: 20,
-    right: 20,
-    backgroundColor: '#3b82f6',
     borderRadius: 12,
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
   },
-  popularText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  planHeader: {
-    alignItems: 'center',
-    marginBottom: 20,
-    marginTop: 8,
-  },
-  planIcon: {
-    fontSize: 32,
-    marginBottom: 8,
-  },
-  planName: {
+  trialTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 8,
+    color: '#ffffff',
+    marginBottom: 4,
   },
-  priceContainer: {
+  trialSubtitle: {
+    fontSize: 14,
+    color: '#ffffff',
+    textAlign: 'center',
+  },
+  planSelector: {
+    flexDirection: 'row',
+    marginHorizontal: 20,
+    marginBottom: 20,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 4,
+  },
+  planOption: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  planOptionSelected: {
+    backgroundColor: '#3b82f6',
+  },
+  planOptionText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#6b7280',
+  },
+  planOptionTextSelected: {
+    color: '#ffffff',
+  },
+  savingsText: {
+    fontSize: 12,
+    color: '#10B981',
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  pricingContainer: {
+    backgroundColor: '#ffffff',
+    marginHorizontal: 20,
+    marginBottom: 20,
+    padding: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  priceRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: 4,
   },
   price: {
-    fontSize: 28,
+    fontSize: 36,
     fontWeight: 'bold',
     color: '#111827',
   },
   period: {
-    fontSize: 16,
+    fontSize: 18,
     color: '#6b7280',
+    marginLeft: 4,
+  },
+  priceDescription: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginTop: 4,
   },
   featuresContainer: {
-    gap: 12,
-    marginBottom: 24,
-  },
-  feature: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  featureText: {
-    fontSize: 14,
-    color: '#374151',
-    flex: 1,
-  },
-  selectButton: {
-    backgroundColor: '#f3f4f6',
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  selectButtonPopular: {
-    backgroundColor: '#3b82f6',
-    borderColor: '#3b82f6',
-  },
-  selectButtonSelected: {
-    backgroundColor: '#10b981',
-    borderColor: '#10b981',
-  },
-  selectButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#374151',
-  },
-  selectButtonTextPopular: {
-    color: '#ffffff',
-  },
-  selectButtonTextSelected: {
-    color: '#ffffff',
-  },
-  benefits: {
-    paddingHorizontal: 20,
-    paddingVertical: 32,
-  },
-  benefitsTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#111827',
+    backgroundColor: '#ffffff',
+    marginHorizontal: 20,
     marginBottom: 20,
-    textAlign: 'center',
+    padding: 20,
+    borderRadius: 12,
   },
-  benefitsList: {
-    gap: 16,
+  featuresTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 16,
   },
-  benefit: {
+  featureItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 12,
+    marginBottom: 16,
   },
-  benefitContent: {
+  featureIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#f3f4f6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  featureContent: {
     flex: 1,
   },
-  benefitTitle: {
+  featureTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#111827',
+    marginBottom: 2,
+  },
+  featureDescription: {
+    fontSize: 14,
+    color: '#6b7280',
+    lineHeight: 20,
+  },
+  subscribeButton: {
+    backgroundColor: '#3b82f6',
+    marginHorizontal: 20,
+    marginBottom: 20,
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  subscribeButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
-    marginBottom: 4,
+    color: '#ffffff',
   },
-  benefitDescription: {
-    fontSize: 14,
+  termsContainer: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    padding: 16,
+    backgroundColor: '#f9fafb',
+    borderRadius: 8,
+  },
+  termsText: {
+    fontSize: 12,
     color: '#6b7280',
-    lineHeight: 20,
-  },
-  footer: {
-    paddingHorizontal: 20,
-    paddingVertical: 24,
-    borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
-  },
-  footerText: {
-    fontSize: 14,
-    color: '#6b7280',
+    lineHeight: 18,
     textAlign: 'center',
-    lineHeight: 20,
   },
-});
+      termsLink: {
+        color: '#3b82f6',
+        textDecorationLine: 'underline',
+      },
+      subscriptionActiveContainer: {
+        backgroundColor: '#ffffff',
+        marginHorizontal: 20,
+        marginBottom: 20,
+        padding: 20,
+        borderRadius: 12,
+        borderWidth: 2,
+        borderColor: '#10b981',
+      },
+      activeSubscriptionInfo: {
+        marginBottom: 16,
+      },
+      activeSubscriptionTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#10b981',
+        marginBottom: 8,
+      },
+      activeSubscriptionPlan: {
+        fontSize: 16,
+        color: '#111827',
+        marginBottom: 4,
+      },
+      activeSubscriptionEnd: {
+        fontSize: 14,
+        color: '#6b7280',
+      },
+      manageButton: {
+        backgroundColor: '#10b981',
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+        alignItems: 'center',
+      },
+      manageButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#ffffff',
+      },
+    });
