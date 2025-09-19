@@ -31,7 +31,6 @@ export interface Job {
   title: string;
   description: string;
   category: string;
-  subcategory?: string;
   location: string; // JSON string
   status: 'ACTIVE' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'EXPIRED';
   clientId: string;
@@ -460,7 +459,6 @@ class SupabaseApiClient {
         title: job.title,
         description: job.description,
         category: job.category,
-        subcategory: job.subcategory,
         location: job.location,
         status: job.status,
         clientId: job.client_id,
@@ -496,7 +494,6 @@ class SupabaseApiClient {
     title: string;
     description: string;
     category: string;
-    subcategory?: string;
     location: any;
     scheduledAt?: string;
   }, userId?: string): Promise<ApiResponse<Job>> {
@@ -521,7 +518,6 @@ class SupabaseApiClient {
           title: jobData.title,
           description: jobData.description,
           category: jobData.category,
-          subcategory: jobData.subcategory,
           location: JSON.stringify(jobData.location),
           client_id: clientId,
           status: 'ACTIVE',
@@ -548,7 +544,6 @@ class SupabaseApiClient {
         title: data.title,
         description: data.description,
         category: data.category,
-        subcategory: data.subcategory,
         location: data.location,
         status: data.status,
         clientId: data.client_id,

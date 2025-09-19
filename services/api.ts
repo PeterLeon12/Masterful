@@ -47,7 +47,6 @@ export interface Job {
   title: string;
   description: string;
   category: string;
-  subcategory?: string;
   location: string; // JSON string
   status: 'ACTIVE' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'EXPIRED';
   clientId: string;
@@ -242,7 +241,6 @@ class ApiClient {
     title: string;
     description: string;
     category: string;
-    subcategory?: string;
     location: any; // Will be JSON stringified
     scheduledAt?: string;
   }): Promise<ApiResponse<Job>> {
