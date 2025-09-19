@@ -32,7 +32,7 @@ export interface Job {
   description: string;
   category: string;
   location: string; // JSON string
-  status: 'ACTIVE' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'EXPIRED';
+  status: 'OPEN' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'PAUSED';
   clientId: string;
   professionalId?: string;
   scheduledAt?: string;
@@ -520,7 +520,7 @@ class SupabaseApiClient {
           category: jobData.category,
           location: JSON.stringify(jobData.location),
           client_id: clientId,
-          status: 'ACTIVE',
+          status: 'OPEN',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
@@ -612,7 +612,7 @@ class SupabaseApiClient {
         query = query.eq('city', filters.city);
       }
       if (filters?.searchQuery) {
-        query = query.or(`(bio.ilike.%${filters.searchQuery}%,categories.ilike.%${filters.searchQuery}%,user.name.ilike.%${filters.searchQuery}%)`);
+        query = query.or(`bio.ilike.%${filters.searchQuery}%,categories.ilike.%${filters.searchQuery}%,user.name.ilike.%${filters.searchQuery}%`);
       }
 
       query = query

@@ -24,8 +24,8 @@ export function isUserRole(value: unknown): value is 'CLIENT' | 'PROFESSIONAL' |
   return isString(value) && ['CLIENT', 'PROFESSIONAL', 'ADMIN'].includes(value);
 }
 
-export function isJobStatus(value: unknown): value is 'ACTIVE' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'EXPIRED' {
-  return isString(value) && ['ACTIVE', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'EXPIRED'].includes(value);
+export function isJobStatus(value: unknown): value is 'OPEN' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'PAUSED' {
+  return isString(value) && ['OPEN', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'PAUSED'].includes(value);
 }
 
 export function isPriority(value: unknown): value is 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT' {

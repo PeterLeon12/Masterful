@@ -48,7 +48,7 @@ export interface Job {
   description: string;
   category: string;
   location: string; // JSON string
-  status: 'ACTIVE' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'EXPIRED';
+  status: 'OPEN' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'PAUSED';
   clientId: string;
   professionalId?: string;
   scheduledAt?: string;

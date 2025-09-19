@@ -164,7 +164,7 @@ export default function JobDetailsScreen() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'ACTIVE': return '#10b981';
+      case 'OPEN': return '#10b981';
       case 'IN_PROGRESS': return '#3b82f6';
       case 'COMPLETED': return '#6b7280';
       case 'CANCELLED': return '#ef4444';
@@ -174,7 +174,7 @@ export default function JobDetailsScreen() {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'ACTIVE': return 'Activ';
+      case 'OPEN': return 'Deschis';
       case 'IN_PROGRESS': return 'În progres';
       case 'COMPLETED': return 'Finalizat';
       case 'CANCELLED': return 'Anulat';
@@ -329,7 +329,7 @@ export default function JobDetailsScreen() {
                   onAccept={handleAcceptApplication}
                   onReject={handleRejectApplication}
                   onMessage={handleMessageApplication}
-                  showActions={job.status === 'ACTIVE'}
+                  showActions={job.status === 'OPEN'}
                 />
               ))
             ) : (
@@ -347,7 +347,7 @@ export default function JobDetailsScreen() {
         )}
 
         {/* Professional Application Section */}
-        {!isClient && user?.role === 'PROFESSIONAL' && job.status === 'ACTIVE' && (
+        {!isClient && user?.role === 'PROFESSIONAL' && job.status === 'OPEN' && (
           <View style={styles.professionalSection}>
             {showApplicationForm ? (
               <JobApplicationForm

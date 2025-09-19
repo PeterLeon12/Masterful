@@ -25,7 +25,7 @@ export const JobCard: React.FC<JobCardProps> = ({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'ACTIVE': return '#10b981';
+      case 'OPEN': return '#10b981';
       case 'IN_PROGRESS': return '#3b82f6';
       case 'COMPLETED': return '#6b7280';
       case 'CANCELLED': return '#ef4444';
@@ -36,7 +36,7 @@ export const JobCard: React.FC<JobCardProps> = ({
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'ACTIVE': return 'Activ';
+      case 'OPEN': return 'Deschis';
       case 'IN_PROGRESS': return 'În progres';
       case 'COMPLETED': return 'Completat';
       case 'CANCELLED': return 'Anulat';
