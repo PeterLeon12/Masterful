@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabaseApiClient } from './supabaseApi';
 
-// API Configuration
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
+// API Configuration - Now using Supabase
+const API_BASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://cjvrtumhlvbmuryremlw.supabase.co';
 
 // Types
 export interface ApiResponse<T> {
@@ -137,58 +138,15 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
-    try {
-      // Check if we're in development and API_BASE_URL is localhost
-      if (API_BASE_URL.includes('localhost') || API_BASE_URL.includes('127.0.0.1')) {
-        console.warn('Backend server not available. Using mock responses for development.');
-        return this.getMockResponse<T>(endpoint, options);
-      }
-
-      const token = await this.getAuthToken();
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      };
-
-      if (token) {
-        (headers as any).Authorization = `Bearer ${token}`;
-      }
-
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        ...options,
-        headers,
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        return {
-          success: false,
-          error: data.error || `HTTP ${response.status}: ${response.statusText}`,
-        };
-      }
-
-      // Handle both direct data and wrapped data responses
-      const responseData = data.data || data;
-
-      return {
-        success: true,
-        data: responseData,
-      };
-    } catch (error) {
-      console.error('API request error:', error);
-      
-      // If it's a network error and we're in development, return mock data
-      if (error instanceof TypeError && error.message.includes('Network request failed')) {
-        console.warn('Backend server not available. Using mock responses for development.');
-        return this.getMockResponse<T>(endpoint, options);
-      }
-      
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Network error',
-      };
-    }
+    // Since we're now using Supabase directly, we should delegate to supabaseApiClient
+    // This method is kept for backward compatibility but should not be used for new calls
+    console.warn('Using legacy API request method. Consider using supabaseApiClient directly.');
+    
+    // For now, return an error to force using the new Supabase API
+    return {
+      success: false,
+      error: 'This endpoint should use supabaseApiClient instead of the legacy API client',
+    };
   }
 
   private getMockResponse<T>(endpoint: string, options: RequestInit): ApiResponse<T> {
@@ -226,71 +184,23 @@ class ApiClient {
     return this.request<T>(endpoint, { method: 'DELETE' });
   }
 
-  // Authentication endpoints
+  // Authentication endpoints - Now using Supabase
   async login(credentials: LoginRequest): Promise<ApiResponse<{ user: User; token: string }>> {
-    const response = await this.request<{ user: User; session: { access_token: string } }>('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify(credentials),
-    });
-    
-    console.log('API Client - Login raw response:', JSON.stringify(response, null, 2));
-    
-    // Transform the response to match our expected format
-    if (response.success && response.data) {
-      console.log('API Client - Login response data:', JSON.stringify(response.data, null, 2));
-      console.log('API Client - Login session:', response.data.session);
-      console.log('API Client - Login access token:', response.data.session?.access_token);
-      
-      return {
-        success: true,
-        data: {
-          user: response.data.user,
-          token: response.data.session.access_token,
-        },
-      };
-    }
-    
-    console.log('API Client - Login response not successful or no data');
-    return {
-      success: false,
-      error: response.error || 'Login failed',
-    };
+    return await supabaseApiClient.login(credentials.email, credentials.password);
   }
 
   async register(userData: RegisterRequest): Promise<ApiResponse<{ user: User; token: string }>> {
-    const response = await this.request<{ user: User; session: { access_token: string } }>('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(userData),
+    return await supabaseApiClient.register({
+      email: userData.email,
+      password: userData.password,
+      name: userData.name,
+      role: userData.role,
+      phone: userData.phone,
     });
-    
-    console.log('API Client - Raw response:', JSON.stringify(response, null, 2));
-    
-    // Transform the response to match our expected format
-    if (response.success && response.data) {
-      console.log('API Client - Response data:', JSON.stringify(response.data, null, 2));
-      console.log('API Client - Session:', response.data.session);
-      console.log('API Client - Access token:', response.data.session?.access_token);
-      
-      return {
-        success: true,
-        data: {
-          user: response.data.user,
-          token: response.data.session.access_token,
-        },
-      };
-    }
-    
-    console.log('API Client - Response not successful or no data');
-    return {
-      success: false,
-      error: response.error || 'Registration failed',
-    };
   }
 
   async logout(): Promise<ApiResponse<void>> {
-    return this.request<void>('/auth/logout', {
-      method: 'POST',
-    });
+    return await supabaseApiClient.logout();
   }
 
   async forgotPassword(email: string): Promise<ApiResponse<null>> {
@@ -313,40 +223,13 @@ class ApiClient {
     });
   }
 
-  // User endpoints
+  // User endpoints - Now using Supabase
   async getProfile(): Promise<ApiResponse<User>> {
-    const response = await this.request<{ user: User }>('/auth/profile');
-    if (response.success && response.data) {
-      return {
-        success: true,
-        data: response.data.user,
-      };
-    }
-    return {
-      success: response.success,
-      data: response.data?.user,
-      message: response.message,
-      error: response.error
-    };
+    return await supabaseApiClient.getProfile();
   }
 
   async updateProfile(updates: Partial<User>): Promise<ApiResponse<User>> {
-    const response = await this.request<{ user: User }>('/auth/profile', {
-      method: 'PUT',
-      body: JSON.stringify(updates),
-    });
-    if (response.success && response.data) {
-      return {
-        success: true,
-        data: response.data.user,
-      };
-    }
-    return {
-      success: response.success,
-      data: response.data?.user,
-      message: response.message,
-      error: response.error
-    };
+    return await supabaseApiClient.updateProfile(updates);
   }
 
   async changePassword(currentPassword: string, newPassword: string): Promise<ApiResponse<void>> {
@@ -356,7 +239,7 @@ class ApiClient {
     });
   }
 
-  // Job endpoints
+  // Job endpoints - Now using Supabase
   async createJob(jobData: {
     title: string;
     description: string;
@@ -367,26 +250,7 @@ class ApiClient {
     priority?: 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
     scheduledAt?: string;
   }): Promise<ApiResponse<Job>> {
-    const response = await this.request<{ job: Job }>('/jobs', {
-      method: 'POST',
-      body: JSON.stringify({
-        ...jobData,
-        location: JSON.stringify(jobData.location),
-        budget: JSON.stringify(jobData.budget),
-      }),
-    });
-    if (response.success && response.data) {
-      return {
-        success: true,
-        data: response.data.job,
-      };
-    }
-    return {
-      success: response.success,
-      data: response.data?.job,
-      message: response.message,
-      error: response.error
-    };
+    return await supabaseApiClient.createJob(jobData);
   }
 
   async getJobs(filters?: {
@@ -398,17 +262,7 @@ class ApiClient {
     limit?: number;
     offset?: number;
   }): Promise<ApiResponse<{ jobs: Job[]; total: number; limit: number; offset: number }>> {
-    const queryParams = new URLSearchParams();
-    if (filters?.category) queryParams.append('category', filters.category);
-    if (filters?.location) queryParams.append('location', filters.location);
-    if (filters?.status) queryParams.append('status', filters.status);
-    if (filters?.clientId) queryParams.append('clientId', filters.clientId);
-    if (filters?.professionalId) queryParams.append('professionalId', filters.professionalId);
-    if (filters?.limit) queryParams.append('limit', filters.limit.toString());
-    if (filters?.offset) queryParams.append('offset', filters.offset.toString());
-
-    const endpoint = `/jobs${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    return this.request<{ jobs: Job[]; total: number; limit: number; offset: number }>(endpoint);
+    return await supabaseApiClient.getJobs(filters);
   }
 
   async getJob(id: string): Promise<ApiResponse<Job>> {
@@ -428,7 +282,7 @@ class ApiClient {
     });
   }
 
-  // Professional endpoints
+  // Professional endpoints - Now using Supabase
   async getProfessionals(filters?: {
     categories?: string[];
     minRating?: number;
@@ -437,22 +291,11 @@ class ApiClient {
     location?: string;
     county?: string;
     city?: string;
+    searchQuery?: string;
     limit?: number;
     offset?: number;
   }): Promise<ApiResponse<{ professionals: Professional[]; total: number; limit: number; offset: number }>> {
-    const queryParams = new URLSearchParams();
-    if (filters?.categories) queryParams.append('categories', filters.categories.join(','));
-    if (filters?.minRating) queryParams.append('minRating', filters.minRating.toString());
-    if (filters?.maxHourlyRate) queryParams.append('maxHourlyRate', filters.maxHourlyRate.toString());
-    if (filters?.isAvailable !== undefined) queryParams.append('isAvailable', filters.isAvailable.toString());
-    if (filters?.location) queryParams.append('location', filters.location);
-    if (filters?.county) queryParams.append('county', filters.county);
-    if (filters?.city) queryParams.append('city', filters.city);
-    if (filters?.limit) queryParams.append('limit', filters.limit.toString());
-    if (filters?.offset) queryParams.append('offset', filters.offset.toString());
-
-    const endpoint = `/professionals${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    return this.request<{ professionals: Professional[]; total: number; limit: number; offset: number }>(endpoint);
+    return await supabaseApiClient.getProfessionals(filters);
   }
 
   async getProfessional(id: string): Promise<ApiResponse<Professional>> {
@@ -581,40 +424,20 @@ class ApiClient {
     });
   }
 
-  // Message endpoints
+  // Message endpoints - Now using Supabase
   async getMessages(jobId: string, limit?: number, offset?: number): Promise<ApiResponse<{ messages: any[]; total: number; limit: number; offset: number }>> {
-    const queryParams = new URLSearchParams();
-    if (limit) queryParams.append('limit', limit.toString());
-    if (offset) queryParams.append('offset', offset.toString());
-
-    const endpoint = `/messages/${jobId}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    return this.request<{ messages: any[]; total: number; limit: number; offset: number }>(endpoint);
+    return await supabaseApiClient.getMessages(jobId, limit, offset);
   }
 
   async sendMessage(jobId: string, messageData: {
     content: string;
     messageType?: 'TEXT' | 'IMAGE' | 'FILE' | 'LOCATION';
   }): Promise<ApiResponse<{ message: any }>> {
-    const response = await this.request<{ message: any }>(`/messages/${jobId}`, {
-      method: 'POST',
-      body: JSON.stringify(messageData),
-    });
-    if (response.success && response.data) {
-      return {
-        success: true,
-        data: response.data.message,
-      };
-    }
-    return response;
+    return await supabaseApiClient.sendMessage(jobId, messageData);
   }
 
   async getConversations(limit?: number, offset?: number): Promise<ApiResponse<{ conversations: any[]; limit: number; offset: number }>> {
-    const queryParams = new URLSearchParams();
-    if (limit) queryParams.append('limit', limit.toString());
-    if (offset) queryParams.append('offset', offset.toString());
-
-    const endpoint = `/messages/conversations${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    return this.request<{ conversations: any[]; limit: number; offset: number }>(endpoint);
+    return await supabaseApiClient.getConversations(limit, offset);
   }
 }
 

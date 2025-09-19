@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/OptimalAuthContext';
 import { serviceCategories } from '@/constants/service-categories';
 import EnhancedLocationPicker from '@/components/EnhancedLocationPicker';
 import { DollarSign } from 'lucide-react-native';
-import { apiClient } from '@/services/api';
+import { supabaseApiClient } from '@/services/supabaseApi';
 import { useApiError } from '@/hooks/useApiError';
 
 interface Location {
@@ -73,7 +73,7 @@ export default function PostJobScreen() {
         priority: urgency.toUpperCase() as 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT'
       };
 
-      const response = await apiClient.createJob({
+      const response = await supabaseApiClient.createJob({
         ...jobData,
         subcategory: jobData.subcategory || undefined
       });

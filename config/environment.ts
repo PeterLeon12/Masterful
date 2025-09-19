@@ -1,7 +1,7 @@
 // Environment configuration
 export const ENV = {
   // API Configuration
-  API_BASE_URL: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api',
+  API_BASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://cjvrtumhlvbmuryremlw.supabase.co',
   API_TIMEOUT: 10000, // 10 seconds
   
   // App Configuration

@@ -3,7 +3,7 @@ import { View, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import NotificationsList from '@/components/NotificationsList';
 import { useApi } from '@/hooks/useApi';
-import { apiClient } from '@/services/api';
+import { supabaseApiClient } from '@/services/supabaseApi';
 import { useApiError } from '@/hooks/useApiError';
 
 interface Notification {
@@ -31,7 +31,7 @@ export default function NotificationsScreen() {
     data: notificationsData, 
     isLoading: notificationsLoading, 
     refresh: refreshNotifications 
-  } = useApi(useCallback(() => apiClient.get('/notifications'), []));
+  } = useApi(useCallback(() => supabaseApiClient.getNotifications(), []));
 
   useEffect(() => {
     if (notificationsData) {

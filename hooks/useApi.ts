@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { apiClient, ApiResponse } from '@/services/api';
+import { supabaseApiClient, ApiResponse } from '@/services/supabaseApi';
 import { getErrorMessage } from '@/utils/errorHandler';
 
 interface UseApiState<T> {
@@ -152,7 +152,7 @@ export function useJobs(filters?: {
   limit?: number;
 }) {
   return useApi(
-    () => apiClient.getJobs(filters),
+    () => supabaseApiClient.getJobs(filters),
     { immediate: true }
   );
 }
@@ -165,16 +165,17 @@ export function useProfessionals(filters?: {
   location?: string;
   county?: string;
   city?: string;
+  searchQuery?: string;
   limit?: number;
   offset?: number;
 }) {
-  const apiCall = useCallback(() => apiClient.getProfessionals(filters), [filters]);
+  const apiCall = useCallback(() => supabaseApiClient.getProfessionals(filters), [filters]);
   return useApi(apiCall, { immediate: true });
 }
 
 export function useProfile() {
   return useApi(
-    () => apiClient.getProfile(),
+    () => supabaseApiClient.getProfile(),
     { immediate: true }
   );
 }
@@ -191,7 +192,7 @@ export function useCreateJob() {
     setState({ isLoading: true, error: null, success: false });
     
     try {
-      const response = await apiClient.createJob(jobData);
+      const response = await supabaseApiClient.createJob(jobData);
       
       if (response.success) {
         setState({ isLoading: false, error: null, success: true });
@@ -230,7 +231,7 @@ export function useUpdateProfile() {
     setState({ isLoading: true, error: null, success: false });
     
     try {
-      const response = await apiClient.updateProfile(updates);
+      const response = await supabaseApiClient.updateProfile(updates);
       
       if (response.success) {
         setState({ isLoading: false, error: null, success: true });

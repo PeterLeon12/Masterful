@@ -1,7 +1,7 @@
 import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useState, useEffect } from 'react';
-import { apiClient, User, LoginRequest, RegisterRequest } from '@/services/api';
+import { supabaseApiClient, User } from '@/services/supabaseApi';
 
 export type UserRole = 'CLIENT' | 'PROFESSIONAL' | 'ADMIN';
 
@@ -59,19 +59,19 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      console.log('Attempting login for:', email);
-      const response = await apiClient.login({ email, password });
+      console.log('Attempting Supabase login for:', email);
+      const response = await supabaseApiClient.login(email, password);
       
       if (!response.success || !response.data) {
-        console.error('Login failed:', response.error);
+        console.error('Supabase login failed:', response.error);
         throw new Error(response.error || 'Login failed');
       }
 
       const { user, token } = response.data;
-      console.log('Login successful for:', user.email);
+      console.log('Supabase login successful for:', user.email);
       await saveUser(user, token);
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Supabase login error:', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -81,19 +81,19 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   const register = async (email: string, password: string, name: string, role: UserRole) => {
     setIsLoading(true);
     try {
-      console.log('Attempting registration for:', email, 'with role:', role);
-      const response = await apiClient.register({ email, password, name, role });
+      console.log('Attempting Supabase registration for:', email, 'with role:', role);
+      const response = await supabaseApiClient.register({ email, password, name, role });
       
       if (!response.success || !response.data) {
-        console.error('Registration failed:', response.error);
+        console.error('Supabase registration failed:', response.error);
         throw new Error(response.error || 'Registration failed');
       }
 
       const { user, token } = response.data;
-      console.log('Registration successful for:', user.email);
+      console.log('Supabase registration successful for:', user.email);
       await saveUser(user, token);
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error('Supabase registration error:', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -102,12 +102,12 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
   const logout = async () => {
     try {
-      await apiClient.logout();
+      await supabaseApiClient.logout();
       await AsyncStorage.removeItem('user');
       await AsyncStorage.removeItem('authToken');
       setUser(null);
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('Supabase logout error:', error);
       // Even if API call fails, clear local data
       await AsyncStorage.removeItem('user');
       await AsyncStorage.removeItem('authToken');
@@ -132,7 +132,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   const updateProfile = async (updates: Partial<User>) => {
     try {
       if (!user) throw new Error('No user to update');
-      const response = await apiClient.updateProfile(updates);
+      const response = await supabaseApiClient.updateProfile(updates);
       
       if (!response.success || !response.data) {
         throw new Error(response.error || 'Profile update failed');
@@ -143,7 +143,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       setUser(updatedUser);
       return updatedUser;
     } catch (error) {
-      console.error('Profile update error:', error);
+      console.error('Supabase profile update error:', error);
       throw error;
     }
   };

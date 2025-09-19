@@ -3,7 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, RefreshCon
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '@/contexts/OptimalAuthContext';
-import { apiClient, Job, JobApplication } from '@/services/api';
+import { supabaseApiClient, Job, JobApplication } from '@/services/supabaseApi';
 import JobApplicationCard from '@/components/JobApplicationCard';
 import JobApplicationForm from '@/components/JobApplicationForm';
 import { 
@@ -31,7 +31,7 @@ export default function JobDetailsScreen() {
   const loadJobDetails = async () => {
     try {
       setIsLoading(true);
-      const response = await apiClient.getJobById(id!);
+      const response = await supabaseApiClient.getJobById(id!);
       
       if (response.success && response.data) {
         setJob(response.data);
@@ -66,7 +66,7 @@ export default function JobDetailsScreen() {
           onPress: async () => {
             try {
               setIsProcessing(applicationId);
-              const response = await apiClient.acceptJobApplication(applicationId);
+              const response = await supabaseApiClient.acceptJobApplication(applicationId);
               
               if (response.success) {
                 Alert.alert('Succes!', 'Aplicația a fost acceptată cu succes!');
@@ -98,7 +98,7 @@ export default function JobDetailsScreen() {
           onPress: async () => {
             try {
               setIsProcessing(applicationId);
-              const response = await apiClient.rejectJobApplication(applicationId);
+              const response = await supabaseApiClient.rejectJobApplication(applicationId);
               
               if (response.success) {
                 Alert.alert('Succes!', 'Aplicația a fost respinsă.');
@@ -132,7 +132,7 @@ export default function JobDetailsScreen() {
     
     setIsSubmittingApplication(true);
     try {
-      const response = await apiClient.applyForJob(id, applicationData);
+      const response = await supabaseApiClient.applyForJob(id, applicationData);
       
       if (response.success) {
         Alert.alert(

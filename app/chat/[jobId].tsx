@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useAuth } from '@/contexts/OptimalAuthContext';
-import { apiClient } from '@/services/api';
+import { supabaseApiClient } from '@/services/supabaseApi';
 import { SupabaseRealtimeChat } from '@/components/SupabaseRealtimeChat';
 import { ArrowLeft, User, Phone } from 'lucide-react-native';
 
@@ -47,7 +47,7 @@ export default function ChatScreen() {
 
   const loadJobDetails = async () => {
     try {
-      const response = await apiClient.getJobById(jobId!);
+      const response = await supabaseApiClient.getJobById(jobId!);
       if (response.success && response.data) {
         setJob(response.data);
       }

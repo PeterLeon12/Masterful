@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
 import { MessageCircle, Clock, User } from 'lucide-react-native';
-import { apiClient } from '@/services/api';
+import { supabaseApiClient } from '@/services/supabaseApi';
 import { router } from 'expo-router';
 
 interface Conversation {
@@ -43,7 +43,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({ userId }) =>
         setIsLoading(true);
       }
 
-      const response = await apiClient.getConversations(20, 0);
+      const response = await supabaseApiClient.getConversations(20, 0);
       
       if (response.success && response.data) {
         setConversations(response.data.conversations || []);

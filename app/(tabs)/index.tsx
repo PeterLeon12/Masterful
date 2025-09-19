@@ -5,7 +5,7 @@ import { router } from 'expo-router';
 import { useAuth } from '@/contexts/OptimalAuthContext';
 import { serviceCategories } from '@/constants/service-categories';
 import { Plus, Search, MapPin, Clock, Bell } from 'lucide-react-native';
-import { apiClient, Job } from '@/services/api';
+import { supabaseApiClient, Job } from '@/services/supabaseApi';
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -16,7 +16,7 @@ export default function HomeScreen() {
   const loadJobs = async () => {
     try {
       setIsLoading(true);
-      const response = await apiClient.getJobs({ limit: 5 });
+      const response = await supabaseApiClient.getJobs({ limit: 5 });
       if (response.success && response.data) {
         setJobs(response.data.jobs || []);
       }
