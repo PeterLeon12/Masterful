@@ -60,7 +60,7 @@ export default function ProfileScreen() {
         { 
           icon: User, 
           label: 'Editează profilul', 
-          onPress: () => router.push('/professional/onboarding'),
+          onPress: () => router.push('/professional/onboarding-enhanced'),
           showChevron: true 
         },
         { 
