@@ -505,15 +505,20 @@ class SupabaseApiClient {
     budget: any;
     priority?: 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
     scheduledAt?: string;
-  }): Promise<ApiResponse<Job>> {
+  }, userId?: string): Promise<ApiResponse<Job>> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      // Get user ID from parameter or try to get from Supabase auth
+      let clientId = userId;
       
-      if (!user) {
-        return {
-          success: false,
-          error: 'User not authenticated',
-        };
+      if (!clientId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          return {
+            success: false,
+            error: 'User not authenticated',
+          };
+        }
+        clientId = user.id;
       }
 
       const { data, error } = await supabase
@@ -527,7 +532,7 @@ class SupabaseApiClient {
           budget: JSON.stringify(jobData.budget),
           priority: jobData.priority || 'NORMAL',
           status: 'ACTIVE',
-          client_id: user.id,
+          client_id: clientId,
           scheduled_at: jobData.scheduledAt,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -614,9 +619,8 @@ class SupabaseApiClient {
       if (filters?.isAvailable !== undefined) {
         query = query.eq('is_available', filters.isAvailable);
       }
-      if (filters?.location) {
-        query = query.eq('location', filters.location);
-      }
+      // Note: professionals table doesn't have a location column
+      // Location filtering is handled by county/city filters
       if (filters?.county) {
         query = query.eq('county', filters.county);
       }
@@ -624,7 +628,7 @@ class SupabaseApiClient {
         query = query.eq('city', filters.city);
       }
       if (filters?.searchQuery) {
-        query = query.or(`bio.ilike.%${filters.searchQuery}%,categories.ilike.%${filters.searchQuery}%,user.name.ilike.%${filters.searchQuery}%`);
+        query = query.or(`(bio.ilike.%${filters.searchQuery}%,categories.ilike.%${filters.searchQuery}%,user.name.ilike.%${filters.searchQuery}%)`);
       }
 
       query = query

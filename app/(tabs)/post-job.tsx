@@ -69,7 +69,7 @@ export default function PostJobScreen() {
       const response = await supabaseApiClient.createJob({
         ...jobData,
         subcategory: jobData.subcategory || undefined
-      });
+      }, user?.id);
       
       if (response.success) {
         Alert.alert(
