@@ -49,9 +49,7 @@ export interface Job {
   category: string;
   subcategory?: string;
   location: string; // JSON string
-  budget: string; // JSON string
   status: 'ACTIVE' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'EXPIRED';
-  priority: 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
   clientId: string;
   professionalId?: string;
   scheduledAt?: string;
@@ -246,11 +244,9 @@ class ApiClient {
     category: string;
     subcategory?: string;
     location: any; // Will be JSON stringified
-    budget: any; // Will be JSON stringified
-    priority?: 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
     scheduledAt?: string;
   }): Promise<ApiResponse<Job>> {
-    return await supabaseApiClient.createJob(jobData);
+    return await supabaseApiClient.createJob(jobData, undefined);
   }
 
   async getJobs(filters?: {
