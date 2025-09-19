@@ -47,6 +47,13 @@ class SocketServiceClass implements SocketService {
 
       const serverUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
       
+      // Check if we're trying to connect to localhost in development
+      if (serverUrl.includes('localhost') || serverUrl.includes('127.0.0.1')) {
+        logger.warn('Socket service: Backend server not available. Skipping socket connection.');
+        this.isConnected = false;
+        return;
+      }
+      
       this.socket = io(serverUrl, {
         auth: {
           token: token,

@@ -251,7 +251,10 @@ class ApiClient {
     }
     
     console.log('API Client - Login response not successful or no data');
-    return response;
+    return {
+      success: false,
+      error: response.error || 'Login failed',
+    };
   }
 
   async register(userData: RegisterRequest): Promise<ApiResponse<{ user: User; token: string }>> {
@@ -278,7 +281,10 @@ class ApiClient {
     }
     
     console.log('API Client - Response not successful or no data');
-    return response;
+    return {
+      success: false,
+      error: response.error || 'Registration failed',
+    };
   }
 
   async logout(): Promise<ApiResponse<void>> {

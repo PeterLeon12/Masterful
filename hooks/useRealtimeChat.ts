@@ -123,7 +123,7 @@ export const useRealtimeChat = ({
       };
 
       // Broadcast message to all subscribers
-      const { error: broadcastError } = await supabase
+      const broadcastResponse = await supabase
         .channel(`chat:${roomName}`)
         .send({
           type: 'broadcast',
@@ -131,8 +131,8 @@ export const useRealtimeChat = ({
           payload: message,
         });
 
-      if (broadcastError) {
-        console.error('Error broadcasting message:', broadcastError);
+      if (broadcastResponse === 'error') {
+        console.error('Error broadcasting message');
         setError('Failed to broadcast message');
         return;
       }
