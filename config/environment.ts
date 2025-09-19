@@ -62,7 +62,8 @@ export const ENV = {
 
 // Environment-specific overrides
 if (ENV.IS_DEVELOPMENT) {
-  ENV.API_BASE_URL = 'http://localhost:3000/api';
+  // Use Supabase directly instead of custom backend
+  ENV.API_BASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://your-project.supabase.co';
   ENV.ENABLE_DEBUG_MODE = true;
 }
 
