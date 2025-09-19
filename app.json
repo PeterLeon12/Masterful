@@ -3,6 +3,11 @@
     "name": "Romanian Marketplace App - Rebuild",
     "slug": "romanian-marketplace-app",
     "version": "1.0.0",
+    "extra": {
+      "eas": {
+        "projectId": "de13a1ca-703a-4802-872d-019b6db382e8"
+      }
+    },
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
