@@ -33,9 +33,7 @@ export interface Job {
   category: string;
   subcategory?: string;
   location: string; // JSON string
-  budget: string; // JSON string
   status: 'ACTIVE' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'EXPIRED';
-  priority: 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
   clientId: string;
   professionalId?: string;
   scheduledAt?: string;
@@ -464,9 +462,7 @@ class SupabaseApiClient {
         category: job.category,
         subcategory: job.subcategory,
         location: job.location,
-        budget: job.budget,
         status: job.status,
-        priority: job.priority,
         clientId: job.client_id,
         professionalId: job.professional_id,
         scheduledAt: job.scheduled_at,
@@ -502,8 +498,6 @@ class SupabaseApiClient {
     category: string;
     subcategory?: string;
     location: any;
-    budget: any;
-    priority?: 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
     scheduledAt?: string;
   }, userId?: string): Promise<ApiResponse<Job>> {
     try {
@@ -529,11 +523,8 @@ class SupabaseApiClient {
           category: jobData.category,
           subcategory: jobData.subcategory,
           location: JSON.stringify(jobData.location),
-          budget: JSON.stringify(jobData.budget),
-          priority: jobData.priority || 'NORMAL',
-          status: 'ACTIVE',
           client_id: clientId,
-          scheduled_at: jobData.scheduledAt,
+          status: 'ACTIVE',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
@@ -559,9 +550,7 @@ class SupabaseApiClient {
         category: data.category,
         subcategory: data.subcategory,
         location: data.location,
-        budget: data.budget,
         status: data.status,
-        priority: data.priority,
         clientId: data.client_id,
         professionalId: data.professional_id,
         scheduledAt: data.scheduled_at,
