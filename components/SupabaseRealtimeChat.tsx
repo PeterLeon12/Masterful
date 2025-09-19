@@ -6,65 +6,66 @@ import {
   TouchableOpacity,
   FlatList,
   StyleSheet,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { createClient } from '@supabase/supabase-js';
 import { useAuth } from '@/contexts/OptimalAuthContext';
-
-// Supabase configuration
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://cjvrtumhlvbmuryremlw.supabase.co';
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqdnJ0dW1obHZibXVyeXJlbWx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxMDA1MDEsImV4cCI6MjA3MzY3NjUwMX0.UcTB6xreDPpuMCEsU-FT_3jMRnhG-2VjK0o6hbx4h_g';
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import { supabase } from '@/services/supabaseRealtimeService';
 
 interface ChatMessage {
   id: string;
   content: string;
   user: {
     name: string;
+    id?: string;
   };
   createdAt: string;
+  roomName: string;
 }
 
 interface SupabaseRealtimeChatProps {
-  roomName: string;
-  username: string;
-  onMessage?: (messages: ChatMessage[]) => void;
-  messages?: ChatMessage[];
+  jobId: string;
+  recipientId: string;
+  recipientName: string;
 }
 
 export const SupabaseRealtimeChat: React.FC<SupabaseRealtimeChatProps> = ({
-  roomName,
-  username,
-  onMessage,
-  messages: initialMessages = [],
+  jobId,
+  recipientId,
+  recipientName,
 }) => {
   const { user } = useAuth();
-  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const flatListRef = useRef<FlatList>(null);
-  const channelRef = useRef<any>(null);
+  const roomName = `job-${jobId}`;
 
+  // Load initial messages
   useEffect(() => {
-    // Subscribe to real-time updates
+    loadMessages();
+  }, [jobId]);
+
+  // Set up real-time subscription
+  useEffect(() => {
     const channel = supabase
       .channel(`chat:${roomName}`)
       .on(
         'broadcast',
         { event: 'message' },
         (payload) => {
-          const newMsg = payload.payload as ChatMessage;
+          const newMessage = payload.payload as ChatMessage;
           setMessages(prev => {
-            const updated = [...prev, newMsg];
-            onMessage?.(updated);
-            return updated;
+            // Avoid duplicates
+            if (prev.some(msg => msg.id === newMessage.id)) {
+              return prev;
+            }
+            return [...prev, newMessage];
           });
+          scrollToBottom();
         }
       )
       .subscribe((status) => {
@@ -77,113 +78,203 @@ export const SupabaseRealtimeChat: React.FC<SupabaseRealtimeChatProps> = ({
         }
       });
 
-    channelRef.current = channel;
-
     return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-      }
+      supabase.removeChannel(channel);
     };
-  }, [roomName, onMessage]);
+  }, [roomName]);
 
-  const sendMessage = async () => {
-    if (!newMessage.trim() || !isConnected) return;
-
-    const message: ChatMessage = {
-      id: Date.now().toString(),
-      content: newMessage.trim(),
-      user: {
-        name: username,
-      },
-      createdAt: new Date().toISOString(),
-    };
-
+  const loadMessages = async () => {
     try {
-      // Send message via broadcast
-      await channelRef.current?.send({
-        type: 'broadcast',
-        event: 'message',
-        payload: message,
-      });
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('messages')
+        .select(`
+          *,
+          sender:users!messages_sender_id_fkey(name)
+        `)
+        .eq('job_id', jobId)
+        .order('created_at', { ascending: true });
 
-      setNewMessage('');
-    } catch (error) {
-      console.error('Error sending message:', error);
-      Alert.alert('Error', 'Failed to send message');
+      if (error) {
+        console.error('Error loading messages:', error);
+        return;
+      }
+
+      const formattedMessages: ChatMessage[] = (data || []).map(msg => ({
+        id: msg.id,
+        content: msg.content,
+        user: {
+          name: msg.sender?.name || 'Unknown',
+          id: msg.sender_id,
+        },
+        createdAt: msg.created_at,
+        roomName: `job-${msg.job_id}`,
+      }));
+
+      setMessages(formattedMessages);
+    } catch (err) {
+      console.error('Error loading messages:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const renderMessage = ({ item }: { item: ChatMessage }) => {
-    const isOwnMessage = item.user.name === username;
-    const messageTime = new Date(item.createdAt).toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
+  const sendMessage = async () => {
+    if (!newMessage.trim() || !user) return;
 
+    const messageId = Date.now().toString();
+    const message: ChatMessage = {
+      id: messageId,
+      content: newMessage.trim(),
+      user: {
+        name: user.name,
+        id: user.id,
+      },
+      createdAt: new Date().toISOString(),
+      roomName,
+    };
+
+    try {
+      // Store message in database
+      const { error: dbError } = await supabase
+        .from('messages')
+        .insert({
+          id: messageId,
+          content: message.content,
+          sender_id: user.id,
+          recipient_id: recipientId,
+          job_id: jobId,
+          message_type: 'TEXT',
+          is_read: false,
+        });
+
+      if (dbError) {
+        console.error('Error storing message:', dbError);
+        return;
+      }
+
+      // Broadcast message to all subscribers
+      const broadcastResponse = await supabase
+        .channel(`chat:${roomName}`)
+        .send({
+          type: 'broadcast',
+          event: 'message',
+          payload: message,
+        });
+
+      if (broadcastResponse === 'error') {
+        console.error('Error broadcasting message');
+        return;
+      }
+
+      // Add message to local state
+      setMessages(prev => [...prev, message]);
+      setNewMessage('');
+      scrollToBottom();
+    } catch (err) {
+      console.error('Error sending message:', err);
+    }
+  };
+
+  const scrollToBottom = () => {
+    setTimeout(() => {
+      flatListRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  };
+
+  const renderMessage = ({ item }: { item: ChatMessage }) => {
+    const isOwnMessage = item.user.id === user?.id;
+    
     return (
-      <View style={[styles.messageContainer, isOwnMessage ? styles.ownMessage : styles.otherMessage]}>
-        <View style={[styles.messageBubble, isOwnMessage ? styles.ownBubble : styles.otherBubble]}>
-          <Text style={[styles.messageText, isOwnMessage ? styles.ownText : styles.otherText]}>
+      <View style={[
+        styles.messageContainer,
+        isOwnMessage ? styles.ownMessage : styles.otherMessage
+      ]}>
+        <View style={[
+          styles.messageBubble,
+          isOwnMessage ? styles.ownBubble : styles.otherBubble
+        ]}>
+          <Text style={[
+            styles.messageText,
+            isOwnMessage ? styles.ownMessageText : styles.otherMessageText
+          ]}>
             {item.content}
           </Text>
-          <Text style={[styles.messageTime, isOwnMessage ? styles.ownTime : styles.otherTime]}>
-            {messageTime}
+          <Text style={[
+            styles.messageTime,
+            isOwnMessage ? styles.ownMessageTime : styles.otherMessageTime
+          ]}>
+            {new Date(item.createdAt).toLocaleTimeString('ro-RO', {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
           </Text>
         </View>
       </View>
     );
   };
 
-  if (!isConnected) {
+  if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007BFF" />
-        <Text style={styles.loadingText}>Connecting to chat...</Text>
+        <ActivityIndicator size="large" color="#3b82f6" />
+        <Text style={styles.loadingText}>Se încarcă mesajele...</Text>
       </View>
     );
   }
 
   return (
-    <KeyboardAvoidingView
+    <KeyboardAvoidingView 
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Chat Room: {roomName}</Text>
-        <View style={[styles.statusIndicator, { backgroundColor: isConnected ? '#4CAF50' : '#F44336' }]} />
+        <View style={styles.recipientInfo}>
+          <Text style={styles.recipientName}>{recipientName}</Text>
+          <View style={styles.statusContainer}>
+            <View style={[
+              styles.statusDot,
+              { backgroundColor: isConnected ? '#4CAF50' : '#FF5722' }
+            ]} />
+            <Text style={styles.statusText}>
+              {isConnected ? 'Conectat' : 'Deconectat'}
+            </Text>
+          </View>
+        </View>
       </View>
 
+      {/* Messages */}
       <FlatList
         ref={flatListRef}
         data={messages}
         keyExtractor={(item) => item.id}
         renderItem={renderMessage}
-        contentContainerStyle={styles.messagesList}
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-        onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
+        style={styles.messagesList}
+        contentContainerStyle={styles.messagesContent}
+        onContentSizeChange={scrollToBottom}
       />
 
+      {/* Input */}
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.textInput}
           value={newMessage}
           onChangeText={setNewMessage}
-          placeholder="Type a message..."
-          placeholderTextColor="#999"
+          placeholder="Scrie un mesaj..."
+          placeholderTextColor="#9ca3af"
           multiline
-          maxLength={500}
+          maxLength={1000}
         />
         <TouchableOpacity
-          style={[styles.sendButton, !newMessage.trim() && styles.sendButtonDisabled]}
+          style={[
+            styles.sendButton,
+            { opacity: newMessage.trim() ? 1 : 0.5 }
+          ]}
           onPress={sendMessage}
-          disabled={!newMessage.trim() || isLoading}
+          disabled={!newMessage.trim()}
         >
-          {isLoading ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <Ionicons name="send" size={20} color="#fff" />
-          )}
+          <Ionicons name="send" size={20} color="#ffffff" />
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -193,45 +284,58 @@ export const SupabaseRealtimeChat: React.FC<SupabaseRealtimeChatProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#007BFF',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'ios' ? 40 : 12,
-  },
-  headerTitle: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-    flex: 1,
-  },
-  statusIndicator: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    backgroundColor: '#f9fafb',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f9fafb',
   },
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#666',
+    color: '#6b7280',
+  },
+  header: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  recipientInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  recipientName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
+  },
+  statusText: {
+    fontSize: 12,
+    color: '#6b7280',
   },
   messagesList: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
+    flex: 1,
+  },
+  messagesContent: {
+    padding: 16,
   },
   messageContainer: {
-    marginBottom: 8,
+    marginBottom: 12,
   },
   ownMessage: {
     alignItems: 'flex-end',
@@ -240,73 +344,69 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   messageBubble: {
-    maxWidth: '80%',
-    paddingVertical: 8,
+    maxWidth: '75%',
     paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 18,
   },
   ownBubble: {
-    backgroundColor: '#007BFF',
+    backgroundColor: '#3b82f6',
     borderBottomRightRadius: 4,
   },
   otherBubble: {
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
     borderBottomLeftRadius: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
   },
   messageText: {
     fontSize: 16,
     lineHeight: 20,
   },
-  ownText: {
-    color: '#fff',
+  ownMessageText: {
+    color: '#ffffff',
   },
-  otherText: {
-    color: '#333',
+  otherMessageText: {
+    color: '#111827',
   },
   messageTime: {
-    fontSize: 12,
+    fontSize: 11,
     marginTop: 4,
   },
-  ownTime: {
-    color: 'rgba(255, 255, 255, 0.7)',
+  ownMessageTime: {
+    color: '#e0e7ff',
     textAlign: 'right',
   },
-  otherTime: {
-    color: '#999',
+  otherMessageTime: {
+    color: '#9ca3af',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    backgroundColor: '#fff',
-    paddingVertical: 8,
+    backgroundColor: '#ffffff',
     paddingHorizontal: 16,
+    paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: '#e5e7eb',
   },
   textInput: {
     flex: 1,
-    backgroundColor: '#f0f0f0',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    marginRight: 8,
-    fontSize: 16,
+    marginRight: 12,
     maxHeight: 100,
+    fontSize: 16,
+    color: '#111827',
   },
   sendButton: {
-    backgroundColor: '#007BFF',
-    borderRadius: 20,
+    backgroundColor: '#3b82f6',
     width: 40,
     height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  sendButtonDisabled: {
-    backgroundColor: '#ccc',
   },
 });

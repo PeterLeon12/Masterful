@@ -119,12 +119,9 @@ export default function ChatScreen() {
       {renderHeader()}
       
       <SupabaseRealtimeChat
-        roomName={`job-${jobId}`}
-        username={user?.name || 'User'}
-        onMessage={(messages) => {
-          // Optional: Handle message updates
-          console.log('Messages updated:', messages.length);
-        }}
+        jobId={jobId!}
+        recipientId={otherUser?.id || 'unknown'}
+        recipientName={otherUser?.name || 'Utilizator'}
       />
     </SafeAreaView>
   );
