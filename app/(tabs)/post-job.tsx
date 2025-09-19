@@ -18,7 +18,6 @@ export default function PostJobScreen() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<Location | undefined>();
   const [urgency, setUrgency] = useState<'low' | 'medium' | 'high'>('medium');
   const [isLoading, setIsLoading] = useState(false);
@@ -58,18 +57,13 @@ export default function PostJobScreen() {
         title,
         description,
         category: selectedCategory,
-        subcategory: selectedSubcategory,
-        location: JSON.stringify({
+        location: {
           county: selectedLocation.county,
           city: selectedLocation.city
-        }),
-        priority: urgency.toUpperCase() as 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT'
+        }
       };
 
-      const response = await supabaseApiClient.createJob({
-        ...jobData,
-        subcategory: jobData.subcategory || undefined
-      }, user?.id);
+      const response = await supabaseApiClient.createJob(jobData, user?.id);
       
       if (response.success) {
         Alert.alert(
@@ -80,7 +74,6 @@ export default function PostJobScreen() {
             setTitle('');
             setDescription('');
             setSelectedCategory(null);
-            setSelectedSubcategory(null);
             setSelectedLocation(undefined);
             setUrgency('medium');
           }}]
@@ -149,7 +142,6 @@ export default function PostJobScreen() {
                 ]}
                 onPress={() => {
                   setSelectedCategory(category.id);
-                  setSelectedSubcategory(null);
                 }}
               >
                 <Text style={styles.categoryIcon}>{category.icon}</Text>
@@ -163,30 +155,6 @@ export default function PostJobScreen() {
             ))}
           </View>
 
-          {selectedCategoryData && (
-            <View style={styles.subcategoryContainer}>
-              <Text style={styles.label}>Subcategorie</Text>
-              <View style={styles.subcategoryGrid}>
-                {selectedCategoryData.subcategories.map((subcategory) => (
-                  <TouchableOpacity
-                    key={subcategory}
-                    style={[
-                      styles.subcategoryTag,
-                      selectedSubcategory === subcategory && styles.subcategoryTagSelected
-                    ]}
-                    onPress={() => setSelectedSubcategory(subcategory)}
-                  >
-                    <Text style={[
-                      styles.subcategoryText,
-                      selectedSubcategory === subcategory && styles.subcategoryTextSelected
-                    ]}>
-                      {subcategory}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          )}
         </View>
 
         <View style={styles.section}>
@@ -336,33 +304,6 @@ const styles = StyleSheet.create({
   },
   categoryNameSelected: {
     color: '#1d4ed8',
-  },
-  subcategoryContainer: {
-    marginTop: 16,
-  },
-  subcategoryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  subcategoryTag: {
-    backgroundColor: '#f3f4f6',
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  subcategoryTagSelected: {
-    backgroundColor: '#3b82f6',
-    borderColor: '#3b82f6',
-  },
-  subcategoryText: {
-    fontSize: 14,
-    color: '#374151',
-  },
-  subcategoryTextSelected: {
-    color: '#ffffff',
   },
   urgencyContainer: {
     gap: 12,

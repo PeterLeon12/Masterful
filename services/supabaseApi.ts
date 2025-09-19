@@ -612,7 +612,7 @@ class SupabaseApiClient {
         query = query.eq('city', filters.city);
       }
       if (filters?.searchQuery) {
-        query = query.or(`bio.ilike.%${filters.searchQuery}%,categories.ilike.%${filters.searchQuery}%,user.name.ilike.%${filters.searchQuery}%`);
+        query = query.or(`bio.ilike.%${filters.searchQuery}%,categories.cs.@>{"${filters.searchQuery}"},user.name.ilike.%${filters.searchQuery}%`);
       }
 
       query = query
