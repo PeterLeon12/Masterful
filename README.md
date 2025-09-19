@@ -1,215 +1,260 @@
-# 🏠 Masterful - Romanian Marketplace App
+# 🚀 Masterful - Romanian Marketplace App
 
-A comprehensive marketplace platform connecting clients with skilled professionals across Romania.
+A comprehensive marketplace application connecting clients with professional service providers across Romania.
 
-## 🚀 **CURRENT STATUS: PRODUCTION READY**
+## 📱 **APP OVERVIEW**
 
-The app is now in a stable, working state with core functionality complete and ready for user testing.
+Masterful is a full-stack marketplace application built with React Native and Expo, designed to connect clients with professional service providers across Romania. The app features real-time messaging, job posting, professional profiles, and integrated payment processing.
 
-## ✨ **FEATURES**
+## ✨ **KEY FEATURES**
 
-### ✅ **FULLY FUNCTIONAL**
-- **🔐 Authentication System**
-  - User registration and login
-  - Role-based access (Client/Professional)
-  - Profile management
-  - Password validation and security
+### 🔐 **Authentication & User Management**
+- **User Registration/Login** with email validation
+- **Role-based Access** (Client vs Professional)
+- **Profile Management** with photo upload
+- **Secure Authentication** with JWT tokens
 
-- **💼 Job Management**
-  - Job posting with detailed forms
-  - Category and subcategory selection
-  - Location-based job posting
-  - Budget estimation and priority settings
+### 💼 **Job Marketplace**
+- **Job Posting** with detailed descriptions
+- **Service Categories** (Plumbing, Electrical, Cleaning, etc.)
+- **Location-based Search** with Romanian cities
+- **Budget Setting** and negotiation
+- **Job Application System**
 
-- **🔍 Professional Search**
-  - Advanced search with filters
-  - Location-based filtering
-  - Rating and price range filters
-  - Professional profiles and reviews
+### 👨‍💼 **Professional Profiles**
+- **Comprehensive Onboarding** (6-step process)
+- **Service Categories** selection
+- **Working Hours** configuration
+- **Service Areas** specification
+- **Certifications** and insurance details
+- **Portfolio** and image uploads
 
-- **💬 Real-time Messaging**
-  - Supabase-powered chat system
-  - Real-time message delivery
-  - Typing indicators
-  - Conversation management
+### 💬 **Real-time Communication**
+- **Instant Messaging** between clients and professionals
+- **Typing Indicators** for real-time feedback
+- **Message History** with persistence
+- **File Sharing** (coming soon)
+- **Location Sharing** (coming soon)
 
-- **👨‍🔧 Professional Onboarding**
-  - 6-step comprehensive setup
-  - Service category selection
-  - Working hours configuration
-  - Certification and insurance details
-  - Service area specification
+### 🔍 **Advanced Search & Filtering**
+- **Text Search** across profiles and services
+- **Category Filtering** by service type
+- **Location Filtering** by city/county
+- **Rating Filtering** by professional ratings
+- **Price Range** filtering
+- **Availability** filtering
 
-- **📍 Location Services**
-  - Complete Romanian locations database
-  - All 41 counties included
-  - Enhanced Vrancea county data
-  - Location picker with search
+### 💳 **Payment Integration**
+- **Stripe Integration** for secure payments
+- **Subscription Plans** (coming soon)
+- **Payment History** tracking
+- **Stripe Connect** for professionals
+
+### 🗺️ **Location Services**
+- **Romanian Cities** database (15,000+ locations)
+- **County-based** organization
+- **Population-based** filtering
+- **Enhanced Location Picker** with search
 
 ## 🛠️ **TECHNICAL STACK**
 
-- **Frontend**: React Native with Expo
-- **Backend**: Node.js with Express
-- **Database**: Supabase (PostgreSQL)
-- **Real-time**: Supabase Realtime
-- **Authentication**: Supabase Auth
-- **State Management**: React Context
-- **Navigation**: Expo Router
+### **Frontend**
+- **React Native** with Expo
+- **Expo Router** for navigation
+- **NativeWind** for styling
+- **Zustand** for state management
+- **React Query** for data fetching
 
-## 🚀 **GETTING STARTED**
+### **Backend**
+- **Node.js** with Express
+- **Supabase** for database and authentication
+- **PostgreSQL** database
+- **WebSocket** for real-time features
 
-### Prerequisites
-- Node.js (v16 or higher)
+### **Services**
+- **Stripe** for payment processing
+- **Supabase** for database and real-time features
+- **Expo** for deployment and build services
+
+## 📁 **PROJECT STRUCTURE**
+
+```
+Masterful/
+├── app/                    # Expo Router pages
+│   ├── (auth)/            # Authentication screens
+│   ├── (tabs)/            # Main app tabs
+│   ├── chat/              # Chat functionality
+│   └── professional/      # Professional onboarding
+├── components/            # Reusable UI components
+├── services/              # API and external services
+├── hooks/                 # Custom React hooks
+├── contexts/              # React contexts
+├── constants/             # App constants and data
+├── utils/                 # Utility functions
+├── backend/               # Backend API server
+└── config/                # Configuration files
+```
+
+## 🚀 **QUICK START**
+
+### **Prerequisites**
+- Node.js (v18 or higher)
 - npm or yarn
 - Expo CLI
 - Supabase account
+- Stripe account
 
-### Installation
+### **Installation**
 
 1. **Clone the repository**
-   ```bash
-   git clone https://github.com/PeterLeon12/Masterful.git
-   cd Masterful
-   ```
+```bash
+git clone https://github.com/PeterLeon12/Masterful.git
+cd Masterful
+```
 
 2. **Install dependencies**
-   ```bash
-   npm install
-   cd backend && npm install
-   ```
+```bash
+npm install
+```
 
-3. **Environment Setup**
-   ```bash
-   # Copy environment files
-   cp .env.example .env
-   cp backend/.env.example backend/.env
-   
-   # Configure your Supabase credentials
-   # Update EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY
-   ```
+3. **Set up environment variables**
+```bash
+# Copy environment template
+cp .env.example .env
+
+# Edit .env with your credentials
+EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
+```
 
 4. **Start the development server**
-   ```bash
-   # Start Metro bundler
-   npm start
-   
-   # In another terminal, start backend
-   cd backend && npm run dev
-   ```
+```bash
+# For web
+npm run start-web
 
-5. **Access the app**
-   - **Web**: http://localhost:8081
-   - **Mobile**: Scan QR code with Expo Go app
-
-## 📱 **APP STRUCTURE**
-
-```
-app/
-├── (auth)/           # Authentication screens
-├── (tabs)/           # Main app tabs
-├── chat/             # Chat functionality
-├── job/              # Job details
-├── professional/     # Professional onboarding
-└── legal/            # Legal documents
-
-components/           # Reusable UI components
-services/            # API and external services
-constants/           # App constants and data
-contexts/            # React contexts
-hooks/               # Custom React hooks
+# For mobile
+npm start
 ```
 
-## 🔧 **DEVELOPMENT STATUS**
+## 📱 **DEPLOYMENT**
 
-### ✅ **COMPLETED (60%)**
-- Core authentication and user management
-- Job posting and search functionality
-- Professional onboarding system
-- Real-time chat messaging
-- Profile management
-- Location services
-- Basic UI/UX implementation
+### **Expo Web Deployment**
+```bash
+# Install Expo CLI
+npm install -g @expo/cli
 
-### ⚠️ **IN DEVELOPMENT (40%)**
-- Payment system (Stripe integration)
-- File upload functionality
-- Push notifications
-- Interactive maps
-- Advanced subscription management
+# Login to Expo
+expo login
+
+# Deploy web version
+expo publish --platform web
+```
+
+### **Mobile App Deployment**
+```bash
+# Install EAS CLI
+npm install -g @expo/eas-cli
+
+# Login to Expo
+eas login
+
+# Configure build
+eas build:configure
+
+# Build for production
+eas build --platform all
+```
+
+## 🔧 **CONFIGURATION**
+
+### **Environment Variables**
+- `EXPO_PUBLIC_SUPABASE_URL`: Supabase project URL
+- `EXPO_PUBLIC_SUPABASE_ANON_KEY`: Supabase anonymous key
+- `EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY`: Stripe publishable key
+- `EXPO_PUBLIC_API_URL`: Backend API URL
+
+### **Supabase Setup**
+1. Create a new Supabase project
+2. Run the SQL scripts in `backend/supabase-schema.sql`
+3. Set up Row Level Security (RLS) policies
+4. Configure authentication settings
+
+### **Stripe Setup**
+1. Create a Stripe account
+2. Get your API keys from the dashboard
+3. Set up webhooks for payment processing
+4. Configure Stripe Connect for professionals
 
 ## 🧪 **TESTING**
 
-The app has been thoroughly audited and tested:
-
-- **Authentication Flow**: ✅ Working
-- **Job Posting**: ✅ Working
-- **Search Functionality**: ✅ Working
-- **Chat System**: ✅ Working
-- **Professional Onboarding**: ✅ Working
-- **Location Services**: ✅ Working
-
-## 📊 **AUDIT RESULTS**
-
-**Overall Functionality Score: 60%**
-
-- **Working Features**: Core marketplace functionality
-- **Placeholder Features**: Payment, file uploads, advanced features
-- **Ready for**: User testing and production deployment
-
-## 🚀 **DEPLOYMENT**
-
-### Web Deployment
+### **Run Tests**
 ```bash
-npm run build
-# Deploy the dist/ folder to your hosting service
+# Run all tests
+npm test
+
+# Run specific test suite
+npm test -- --testNamePattern="Authentication"
 ```
 
-### Mobile Deployment
+### **Test Coverage**
 ```bash
-# Build for production
-eas build --platform all
-
-# Submit to app stores
-eas submit --platform all
+# Generate coverage report
+npm run test:coverage
 ```
+
+## 📊 **MONITORING & ANALYTICS**
+
+- **Expo Analytics**: App performance and usage
+- **Supabase Dashboard**: Database and authentication monitoring
+- **Stripe Dashboard**: Payment processing analytics
+- **Custom Logging**: Application-specific metrics
 
 ## 🤝 **CONTRIBUTING**
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## 📄 **LICENSE**
+## 📝 **LICENSE**
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 📞 **SUPPORT**
+## 🆘 **SUPPORT**
 
-For support and questions:
-- Create an issue on GitHub
-- Contact: [Your Contact Information]
+- **Documentation**: [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)
+- **Issues**: [GitHub Issues](https://github.com/PeterLeon12/Masterful/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/PeterLeon12/Masterful/discussions)
 
 ## 🎯 **ROADMAP**
 
-### Phase 1 (Current)
-- ✅ Core marketplace functionality
-- ✅ User authentication and profiles
-- ✅ Job posting and search
+### **Phase 1** ✅
+- [x] Core marketplace functionality
+- [x] User authentication
+- [x] Job posting and search
+- [x] Real-time messaging
+- [x] Payment integration
 
-### Phase 2 (Next)
-- 🔄 Payment system integration
-- 🔄 File upload functionality
-- 🔄 Push notifications
+### **Phase 2** 🚧
+- [ ] Push notifications
+- [ ] Advanced analytics
+- [ ] Mobile app optimization
+- [ ] Performance improvements
 
-### Phase 3 (Future)
-- 📅 Advanced analytics
-- 📅 Mobile app optimization
-- 📅 International expansion
+### **Phase 3** 📋
+- [ ] Multi-language support
+- [ ] Advanced payment features
+- [ ] AI-powered recommendations
+- [ ] Advanced search algorithms
+
+## 📞 **CONTACT**
+
+- **Developer**: Peter Leon
+- **Email**: timis.petre51@gmail.com
+- **GitHub**: [@PeterLeon12](https://github.com/PeterLeon12)
 
 ---
 
-**Last Updated**: December 2024
-**Version**: 1.0.0
-**Status**: Production Ready
+**Built with ❤️ for the Romanian market**
