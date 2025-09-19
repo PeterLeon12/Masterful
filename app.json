@@ -20,14 +20,18 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "app.rork.romanian-marketplace-app"
+      "bundleIdentifier": "app.rork.romanian-marketplace-app",
+      "runtimeVersion": "1.0.0"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.rork.romanianmarketplaceapp"
+      "package": "com.rork.romanianmarketplaceapp",
+      "runtimeVersion": {
+        "policy": "appVersion"
+      }
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
@@ -42,6 +46,9 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "updates": {
+      "url": "https://u.expo.dev/de13a1ca-703a-4802-872d-019b6db382e8"
     }
   }
 }

@@ -63,12 +63,13 @@ export const ENV = {
 // Environment-specific overrides
 if (ENV.IS_DEVELOPMENT) {
   // Use Supabase directly instead of custom backend
-  ENV.API_BASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://your-project.supabase.co';
+  ENV.API_BASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://cjvrtumhlvbmuryremlw.supabase.co';
   ENV.ENABLE_DEBUG_MODE = true;
 }
 
 if (ENV.IS_PRODUCTION) {
-  ENV.API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.masterful.app/api';
+  // For mobile apps, use Supabase directly
+  ENV.API_BASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://cjvrtumhlvbmuryremlw.supabase.co';
   ENV.ENABLE_DEBUG_MODE = false;
 }
 
