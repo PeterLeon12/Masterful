@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
 import { Camera, Image as ImageIcon, X } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
 
 interface ImagePickerProps {
   onImageSelect: (image: any) => void;
@@ -27,42 +28,35 @@ export const ImagePicker: React.FC<ImagePickerProps> = ({
     try {
       setIsSelecting(true);
       
-      // In a real app, you would use react-native-image-picker or similar
-      // For now, we'll simulate image selection
-      Alert.alert(
-        'Image Selection',
-        'Image picker functionality would be implemented here using react-native-image-picker',
-        [
-          {
-            text: 'Camera',
-            onPress: () => {
-              // Simulate camera selection
-              const mockImage = {
-                id: Date.now().toString(),
-                uri: 'file://sample-image.jpg',
-                name: 'sample-image.jpg',
-              };
-              onImageSelect(mockImage);
-            },
-          },
-          {
-            text: 'Gallery',
-            onPress: () => {
-              // Simulate gallery selection
-              const mockImage = {
-                id: Date.now().toString(),
-                uri: 'file://sample-image.jpg',
-                name: 'sample-image.jpg',
-              };
-              onImageSelect(mockImage);
-            },
-          },
-          {
-            text: 'Cancel',
-            style: 'cancel',
-          },
-        ]
-      );
+      // Use expo-image-picker for production
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Please grant camera roll permissions to select images');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsMultipleSelection: allowMultiple,
+        quality: 0.8,
+        maxImages: allowMultiple ? maxImages : 1,
+      });
+
+      if (!result.canceled) {
+        const images = result.assets.map((asset, index) => ({
+          id: `${Date.now()}-${index}`,
+          uri: asset.uri,
+          name: asset.fileName || `image-${index}.jpg`,
+          type: asset.type || 'image/jpeg',
+        }));
+
+        if (allowMultiple) {
+          images.forEach(image => onImageSelect(image));
+        } else {
+          onImageSelect(images[0]);
+        }
+      }
     } catch (error) {
       console.error('Error selecting image:', error);
       Alert.alert('Error', 'Failed to select image');

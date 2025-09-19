@@ -35,9 +35,11 @@ export interface Job {
   status: 'OPEN' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'PAUSED';
   clientId: string;
   professionalId?: string;
-  scheduledAt?: string;
-  completedAt?: string;
-  cancelledAt?: string;
+  budgetMin?: number;
+  budgetMax?: number;
+  deadline?: string;
+  requirements?: string;
+  images?: string[];
   createdAt: string;
   updatedAt: string;
   client?: {
@@ -52,24 +54,58 @@ export interface Job {
   };
 }
 
+export interface Client {
+  id: string;
+  userId: string;
+  companyName?: string;
+  companySize?: string;
+  preferredContactMethod: string;
+  createdAt: string;
+  updatedAt: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+    phone?: string;
+    avatar?: string;
+  };
+}
+
+export interface Profile {
+  id: string;
+  userId: string;
+  bio?: string;
+  location?: string;
+  website?: string;
+  socialLinks?: any; // JSON object
+  preferences?: any; // JSON object
+  createdAt: string;
+  updatedAt: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+    phone?: string;
+    avatar?: string;
+  };
+}
+
 export interface Professional {
   id: string;
   userId: string;
-  categories: string; // Comma-separated string
+  categories: string[]; // Array of strings
   hourlyRate: number;
-  currency: string;
   rating: number;
   reviewCount: number;
   totalEarnings: number;
-  isVerified: boolean;
   isAvailable: boolean;
   experience: number;
   bio?: string;
-  portfolio: string; // Comma-separated URLs
-  certifications: string; // Comma-separated URLs
+  portfolio: string[]; // Array of URLs
+  certifications: string[]; // Array of URLs
   insurance: boolean;
-  workingHours?: string; // JSON string
-  serviceAreas: string; // Comma-separated areas
+  serviceAreas: string[]; // Array of areas
+  stripeAccountId?: string;
   createdAt: string;
   updatedAt: string;
   user?: {
@@ -463,9 +499,11 @@ class SupabaseApiClient {
         status: job.status,
         clientId: job.client_id,
         professionalId: job.professional_id,
-        scheduledAt: job.scheduled_at,
-        completedAt: job.completed_at,
-        cancelledAt: job.cancelled_at,
+        budgetMin: job.budget_min,
+        budgetMax: job.budget_max,
+        deadline: job.deadline,
+        requirements: job.requirements,
+        images: job.images || [],
         createdAt: job.created_at,
         updatedAt: job.updated_at,
         client: job.client,
@@ -495,7 +533,11 @@ class SupabaseApiClient {
     description: string;
     category: string;
     location: any;
-    scheduledAt?: string;
+    budgetMin?: number;
+    budgetMax?: number;
+    deadline?: string;
+    requirements?: string;
+    images?: string[];
   }, userId?: string): Promise<ApiResponse<Job>> {
     try {
       // Get user ID from parameter or try to get from Supabase auth
@@ -519,6 +561,11 @@ class SupabaseApiClient {
           description: jobData.description,
           category: jobData.category,
           location: JSON.stringify(jobData.location),
+          budget_min: jobData.budgetMin,
+          budget_max: jobData.budgetMax,
+          deadline: jobData.deadline,
+          requirements: jobData.requirements,
+          images: jobData.images || [],
           client_id: clientId,
           status: 'OPEN',
           created_at: new Date().toISOString(),
@@ -548,9 +595,11 @@ class SupabaseApiClient {
         status: data.status,
         clientId: data.client_id,
         professionalId: data.professional_id,
-        scheduledAt: data.scheduled_at,
-        completedAt: data.completed_at,
-        cancelledAt: data.cancelled_at,
+        budgetMin: data.budget_min,
+        budgetMax: data.budget_max,
+        deadline: data.deadline,
+        requirements: data.requirements,
+        images: data.images || [],
         createdAt: data.created_at,
         updatedAt: data.updated_at,
         client: data.client,
@@ -632,21 +681,19 @@ class SupabaseApiClient {
       const professionals: Professional[] = (data || []).map(prof => ({
         id: prof.id,
         userId: prof.user_id,
-        categories: prof.categories,
-        hourlyRate: prof.hourly_rate,
-        currency: prof.currency,
-        rating: prof.rating,
-        reviewCount: prof.review_count,
-        totalEarnings: prof.total_earnings,
-        isVerified: prof.is_verified,
-        isAvailable: prof.is_available,
-        experience: prof.experience,
+        categories: prof.categories || [],
+        hourlyRate: prof.hourly_rate || 0,
+        rating: prof.rating || 0,
+        reviewCount: prof.review_count || 0,
+        totalEarnings: prof.total_earnings || 0,
+        isAvailable: prof.is_available || false,
+        experience: prof.experience || 0,
         bio: prof.bio,
-        portfolio: prof.portfolio,
-        certifications: prof.certifications,
-        insurance: prof.insurance,
-        workingHours: prof.working_hours,
-        serviceAreas: prof.service_areas,
+        portfolio: prof.portfolio || [],
+        certifications: prof.certifications || [],
+        insurance: prof.insurance || false,
+        serviceAreas: prof.service_areas || [],
+        stripeAccountId: prof.stripe_account_id,
         createdAt: prof.created_at,
         updatedAt: prof.updated_at,
         user: prof.user,
@@ -1095,8 +1142,236 @@ class SupabaseApiClient {
     }
   }
 
-  // Profile
-  async getProfile(): Promise<ApiResponse<User>> {
+  // Clients
+  async getClientProfile(): Promise<ApiResponse<Client>> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        return {
+          success: false,
+          error: 'User not authenticated',
+        };
+      }
+
+      const { data: clientProfile, error } = await supabase
+        .from('clients')
+        .select(`
+          *,
+          user:users!clients_user_id_fkey(id, name, email, phone, avatar)
+        `)
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching client profile:', error);
+        return {
+          success: false,
+          error: error.message,
+        };
+      }
+
+      const client: Client = {
+        id: clientProfile.id,
+        userId: clientProfile.user_id,
+        companyName: clientProfile.company_name,
+        companySize: clientProfile.company_size,
+        preferredContactMethod: clientProfile.preferred_contact_method,
+        createdAt: clientProfile.created_at,
+        updatedAt: clientProfile.updated_at,
+        user: clientProfile.user,
+      };
+
+      return {
+        success: true,
+        data: client,
+      };
+    } catch (error) {
+      console.error('Error fetching client profile:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch client profile',
+      };
+    }
+  }
+
+  async updateClientProfile(updates: Partial<Client>): Promise<ApiResponse<Client>> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        return {
+          success: false,
+          error: 'User not authenticated',
+        };
+      }
+
+      const { data, error } = await supabase
+        .from('clients')
+        .update({
+          company_name: updates.companyName,
+          company_size: updates.companySize,
+          preferred_contact_method: updates.preferredContactMethod,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('user_id', user.id)
+        .select(`
+          *,
+          user:users!clients_user_id_fkey(id, name, email, phone, avatar)
+        `)
+        .single();
+
+      if (error) {
+        console.error('Error updating client profile:', error);
+        return {
+          success: false,
+          error: error.message,
+        };
+      }
+
+      const updatedClient: Client = {
+        id: data.id,
+        userId: data.user_id,
+        companyName: data.company_name,
+        companySize: data.company_size,
+        preferredContactMethod: data.preferred_contact_method,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at,
+        user: data.user,
+      };
+
+      return {
+        success: true,
+        data: updatedClient,
+      };
+    } catch (error) {
+      console.error('Error updating client profile:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to update client profile',
+      };
+    }
+  }
+
+  // Profiles
+  async getProfile(): Promise<ApiResponse<Profile>> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        return {
+          success: false,
+          error: 'User not authenticated',
+        };
+      }
+
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select(`
+          *,
+          user:users!profiles_user_id_fkey(id, name, email, phone, avatar)
+        `)
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return {
+          success: false,
+          error: error.message,
+        };
+      }
+
+      const userProfile: Profile = {
+        id: profile.id,
+        userId: profile.user_id,
+        bio: profile.bio,
+        location: profile.location,
+        website: profile.website,
+        socialLinks: profile.social_links,
+        preferences: profile.preferences,
+        createdAt: profile.created_at,
+        updatedAt: profile.updated_at,
+        user: profile.user,
+      };
+
+      return {
+        success: true,
+        data: userProfile,
+      };
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch profile',
+      };
+    }
+  }
+
+  async updateProfile(updates: Partial<Profile>): Promise<ApiResponse<Profile>> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        return {
+          success: false,
+          error: 'User not authenticated',
+        };
+      }
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({
+          bio: updates.bio,
+          location: updates.location,
+          website: updates.website,
+          social_links: updates.socialLinks,
+          preferences: updates.preferences,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('user_id', user.id)
+        .select(`
+          *,
+          user:users!profiles_user_id_fkey(id, name, email, phone, avatar)
+        `)
+        .single();
+
+      if (error) {
+        console.error('Error updating profile:', error);
+        return {
+          success: false,
+          error: error.message,
+        };
+      }
+
+      const updatedProfile: Profile = {
+        id: data.id,
+        userId: data.user_id,
+        bio: data.bio,
+        location: data.location,
+        website: data.website,
+        socialLinks: data.social_links,
+        preferences: data.preferences,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at,
+        user: data.user,
+      };
+
+      return {
+        success: true,
+        data: updatedProfile,
+      };
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to update profile',
+      };
+    }
+  }
+
+  // User Profile (for backward compatibility)
+  async getUserProfile(): Promise<ApiResponse<User>> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -1114,7 +1389,7 @@ class SupabaseApiClient {
         .single();
 
       if (error) {
-        console.error('Error fetching profile:', error);
+        console.error('Error fetching user profile:', error);
         return {
           success: false,
           error: error.message,
@@ -1142,15 +1417,15 @@ class SupabaseApiClient {
         data: profileUser,
       };
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error('Error fetching user profile:', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch profile',
+        error: error instanceof Error ? error.message : 'Failed to fetch user profile',
       };
     }
   }
 
-  async updateProfile(updates: Partial<User>): Promise<ApiResponse<User>> {
+  async updateUserProfile(updates: Partial<User>): Promise<ApiResponse<User>> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       

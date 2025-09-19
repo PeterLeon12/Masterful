@@ -51,9 +51,11 @@ export interface Job {
   status: 'OPEN' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'PAUSED';
   clientId: string;
   professionalId?: string;
-  scheduledAt?: string;
-  completedAt?: string;
-  cancelledAt?: string;
+  budgetMin?: number;
+  budgetMax?: number;
+  deadline?: string;
+  requirements?: string;
+  images?: string[];
   createdAt: string;
   updatedAt: string;
   client?: {
@@ -94,21 +96,19 @@ export interface JobApplication {
 export interface Professional {
   id: string;
   userId: string;
-  categories: string; // Comma-separated string
+  categories: string[]; // Array of strings
   hourlyRate: number;
-  currency: string;
   rating: number;
   reviewCount: number;
   totalEarnings: number;
-  isVerified: boolean;
   isAvailable: boolean;
   experience: number;
   bio?: string;
-  portfolio: string; // Comma-separated URLs
-  certifications: string; // Comma-separated URLs
+  portfolio: string[]; // Array of URLs
+  certifications: string[]; // Array of URLs
   insurance: boolean;
-  workingHours?: string; // JSON string
-  serviceAreas: string; // Comma-separated areas
+  serviceAreas: string[]; // Array of areas
+  stripeAccountId?: string;
   createdAt: string;
   updatedAt: string;
   user?: {
@@ -222,11 +222,11 @@ class ApiClient {
 
   // User endpoints - Now using Supabase
   async getProfile(): Promise<ApiResponse<User>> {
-    return await supabaseApiClient.getProfile();
+    return await supabaseApiClient.getUserProfile();
   }
 
   async updateProfile(updates: Partial<User>): Promise<ApiResponse<User>> {
-    return await supabaseApiClient.updateProfile(updates);
+    return await supabaseApiClient.updateUserProfile(updates);
   }
 
   async changePassword(currentPassword: string, newPassword: string): Promise<ApiResponse<void>> {
@@ -242,7 +242,11 @@ class ApiClient {
     description: string;
     category: string;
     location: any; // Will be JSON stringified
-    scheduledAt?: string;
+    budgetMin?: number;
+    budgetMax?: number;
+    deadline?: string;
+    requirements?: string;
+    images?: string[];
   }): Promise<ApiResponse<Job>> {
     return await supabaseApiClient.createJob(jobData, undefined);
   }

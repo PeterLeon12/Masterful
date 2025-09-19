@@ -81,14 +81,10 @@ export default function HomeScreen() {
         </View>
       </View>
       <Text style={styles.jobPrice}>
-        {(() => {
-          try {
-            const budget = JSON.parse(item.budget);
-            return `${budget.min}-${budget.max} ${budget.currency}`;
-          } catch {
-            return item.budget;
-          }
-        })()}
+        {item.budgetMin && item.budgetMax 
+          ? `${item.budgetMin}-${item.budgetMax} RON`
+          : 'Preț negociabil'
+        }
       </Text>
     </TouchableOpacity>
   );
