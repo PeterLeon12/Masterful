@@ -67,7 +67,7 @@ if (ENV.IS_DEVELOPMENT) {
 }
 
 if (ENV.IS_PRODUCTION) {
-  ENV.API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
+  ENV.API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.masterful.app/api';
   ENV.ENABLE_DEBUG_MODE = false;
 }
 
