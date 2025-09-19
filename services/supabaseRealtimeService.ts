@@ -10,7 +10,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey);
 export interface Message {
   id: string;
   job_id: string;
-  sender_id: string;
+  sender_id: string;;
   recipient_id: string;
   content: string;
   message_type: string;

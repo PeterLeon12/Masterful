@@ -22,7 +22,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "app.rork.romanian-marketplace-app"
+      "package": "com.rork.romanianmarketplaceapp"
     },
     "web": {
       "favicon": "./assets/images/favicon.png"

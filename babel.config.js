@@ -19,8 +19,8 @@ module.exports = function (api) {
           },
         },
       ],
-      // Note: react-native-reanimated plugin removed as package is not installed
-      // 'react-native-reanimated/plugin',
+      // Use the standard reanimated plugin
+      'react-native-reanimated/plugin',
     ],
   };
 };
