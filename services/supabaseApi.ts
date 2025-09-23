@@ -352,29 +352,44 @@ class SupabaseApiClient {
         };
       }
 
-      // Create user profile in users table
-      const { data: userProfile, error: profileError } = await supabase
+      // Create user profile in users table (handle existing users)
+      let userProfile;
+      const { data: existingUser } = await supabase
         .from('users')
-        .insert({
-          id: data.user.id,
-          email: data.user.email,
-          name: userData.name,
-          role: userData.role,
-          phone: userData.phone,
-          is_active: true,
-          is_verified: false,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .select()
+        .select('*')
+        .eq('id', data.user.id)
         .single();
 
-      if (profileError) {
-        console.error('Error creating user profile:', profileError);
-        return {
-          success: false,
-          error: 'Failed to create user profile',
-        };
+      if (existingUser) {
+        // User already exists, use existing profile
+        userProfile = existingUser;
+        console.log('User profile already exists, using existing profile');
+      } else {
+        // Create new user profile
+        const { data: newUserProfile, error: profileError } = await supabase
+          .from('users')
+          .insert({
+            id: data.user.id,
+            email: data.user.email,
+            name: userData.name,
+            role: userData.role,
+            phone: userData.phone,
+            is_active: true,
+            is_verified: false,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+
+        if (profileError) {
+          console.error('Error creating user profile:', profileError);
+          return {
+            success: false,
+            error: 'Failed to create user profile',
+          };
+        }
+        userProfile = newUserProfile;
       }
 
       const user: User = {
