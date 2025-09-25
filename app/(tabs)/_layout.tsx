@@ -44,7 +44,8 @@ export default function TabLayout() {
         }}
       />
       
-      {isClient && (
+      {/* Search tab hidden - removed from navigation */}
+      {/* {isClient && (
         <Tabs.Screen
           name="search"
           options={{
@@ -52,7 +53,7 @@ export default function TabLayout() {
             tabBarIcon: ({ color, size }) => <Search color={color} size={size} />,
           }}
         />
-      )}
+      )} */}
 
       <Tabs.Screen
         name="post-job"

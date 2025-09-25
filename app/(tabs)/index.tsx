@@ -133,7 +133,7 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={styles.secondaryAction}
-              onPress={() => router.push('/(tabs)/search')}
+              onPress={() => router.push('/search')}
             >
               <Search size={20} color="#3b82f6" />
               <Text style={styles.secondaryActionText}>Găsește meșteri</Text>
