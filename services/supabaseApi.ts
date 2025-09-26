@@ -158,6 +158,11 @@ export interface JobApplication {
     email: string;
     avatar?: string;
   };
+  job?: {
+    id: string;
+    title: string;
+    client_id: string;
+  };
   professional_profile?: {
     id: string;
     hourly_rate: number;
@@ -859,22 +864,26 @@ class SupabaseApiClient {
   }
 
   // Conversations
-  async getConversations(limit?: number, offset?: number): Promise<ApiResponse<{ conversations: any[]; limit: number; offset: number }>> {
+  async getConversations(limit?: number, offset?: number, userId?: string): Promise<ApiResponse<{ conversations: any[]; limit: number; offset: number }>> {
     try {
       console.log('API: Getting conversations');
       
-      // Get current user from auth context instead of supabase.auth
-      const { data: { user } } = await supabase.auth.getUser();
+      // Get current user from parameter or from supabase.auth
+      let currentUserId = userId;
       
-      if (!user) {
-        console.error('No authenticated user found');
-        return {
-          success: false,
-          error: 'User not authenticated',
-        };
+      if (!currentUserId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          console.error('No authenticated user found');
+          return {
+            success: false,
+            error: 'User not authenticated',
+          };
+        }
+        currentUserId = user.id;
       }
       
-      console.log('Current user ID:', user.id);
+      console.log('Current user ID:', currentUserId);
       
       // Get unique job conversations for the current user
       const { data: messages, error: messagesError } = await supabase
@@ -889,7 +898,7 @@ class SupabaseApiClient {
           sender_id,
           recipient_id
         `)
-        .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
+        .or(`sender_id.eq.${currentUserId},recipient_id.eq.${currentUserId}`)
         .order('created_at', { ascending: false });
 
       if (messagesError) {
@@ -912,7 +921,7 @@ class SupabaseApiClient {
             id: jobId,
             jobId: jobId,
             jobTitle: message.job.title,
-            otherUser: message.sender_id === user.id ? message.recipient : message.sender,
+            otherUser: message.sender_id === currentUserId ? message.recipient : message.sender,
             lastMessage: {
               content: message.content,
               createdAt: message.created_at,

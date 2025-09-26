@@ -43,7 +43,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({ userId }) =>
         setIsLoading(true);
       }
 
-      const response = await supabaseApiClient.getConversations(20, 0);
+      const response = await supabaseApiClient.getConversations(20, 0, userId);
       
       if (response.success && response.data) {
         setConversations(response.data.conversations || []);
