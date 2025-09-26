@@ -1090,6 +1090,204 @@ class SupabaseApiClient {
     }
   }
 
+  // Get jobs by client
+  async getJobsByClient(clientId: string): Promise<ApiResponse<{ jobs: Job[]; total: number }>> {
+    try {
+      const { data, error, count } = await supabase
+        .from('jobs')
+        .select(`
+          *,
+          client:users!jobs_client_id_fkey(id, name, email, avatar),
+          professional:users!jobs_professional_id_fkey(id, name, email, avatar)
+        `)
+        .eq('client_id', clientId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching client jobs:', error);
+        return {
+          success: false,
+          error: error.message,
+        };
+      }
+
+      const jobs: Job[] = (data || []).map(job => ({
+        id: job.id,
+        title: job.title,
+        description: job.description,
+        category: job.category,
+        location: job.location,
+        status: job.status,
+        clientId: job.client_id,
+        professionalId: job.professional_id,
+        budgetMin: job.budget_min,
+        budgetMax: job.budget_max,
+        deadline: job.deadline,
+        requirements: job.requirements,
+        images: job.images || [],
+        createdAt: job.created_at,
+        updatedAt: job.updated_at,
+        client: job.client,
+        professional: job.professional,
+      }));
+
+      return {
+        success: true,
+        data: {
+          jobs,
+          total: count || 0,
+        },
+      };
+    } catch (error) {
+      console.error('Error fetching client jobs:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch client jobs',
+      };
+    }
+  }
+
+  // Delete job
+  async deleteJob(jobId: string): Promise<ApiResponse<void>> {
+    try {
+      console.log('API: Attempting to delete job with ID:', jobId);
+      const { data, error } = await supabase
+        .from('jobs')
+        .delete()
+        .eq('id', jobId)
+        .select();
+
+      console.log('API: Delete result - data:', data, 'error:', error);
+
+      if (error) {
+        console.error('API: Error deleting job:', error);
+        return {
+          success: false,
+          error: error.message,
+        };
+      }
+
+      console.log('API: Job deleted successfully');
+      return {
+        success: true,
+      };
+    } catch (error) {
+      console.error('API: Error deleting job:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to delete job',
+      };
+    }
+  }
+
+  // Update job
+  async updateJob(jobId: string, jobData: {
+    title?: string;
+    description?: string;
+    category?: string;
+    location?: string;
+    budgetMin?: number;
+    budgetMax?: number;
+    deadline?: string;
+    requirements?: string;
+    images?: string[];
+  }, userId?: string): Promise<ApiResponse<Job>> {
+    try {
+      console.log('API: Updating job with ID:', jobId, 'Data:', jobData, 'User ID:', userId);
+      
+      // If userId is provided, use it for permission check
+      if (userId) {
+        // Check if job exists and belongs to current user
+        const { data: existingJob, error: fetchError } = await supabase
+          .from('jobs')
+          .select('id, client_id')
+          .eq('id', jobId)
+          .eq('client_id', userId)
+          .single();
+
+        if (fetchError || !existingJob) {
+          console.log('API: Job not found or not owned by user:', fetchError);
+          return {
+            success: false,
+            error: 'Job not found or you do not have permission to update it',
+          };
+        }
+        console.log('API: Job found, proceeding with update');
+      }
+
+      const { data, error } = await supabase
+        .from('jobs')
+        .update({
+          title: jobData.title,
+          description: jobData.description,
+          category: jobData.category,
+          location: typeof jobData.location === 'object' ? JSON.stringify(jobData.location) : jobData.location,
+          budget_min: jobData.budgetMin,
+          budget_max: jobData.budgetMax,
+          deadline: jobData.deadline,
+          requirements: jobData.requirements,
+          images: jobData.images,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', jobId)
+        .select(`
+          *,
+          client:users!jobs_client_id_fkey(id, name, email, avatar),
+          professional:users!jobs_professional_id_fkey(id, name, email, avatar)
+        `);
+
+      console.log('API: Update result - data:', data, 'error:', error);
+
+      if (error) {
+        console.error('Error updating job:', error);
+        return {
+          success: false,
+          error: error.message,
+        };
+      }
+
+      if (!data || data.length === 0) {
+        console.log('API: No rows updated');
+        return {
+          success: false,
+          error: 'No rows were updated. Job may not exist or you may not have permission.',
+        };
+      }
+
+      const updatedJob = data[0];
+      const job: Job = {
+        id: updatedJob.id,
+        title: updatedJob.title,
+        description: updatedJob.description,
+        category: updatedJob.category,
+        location: updatedJob.location,
+        status: updatedJob.status,
+        clientId: updatedJob.client_id,
+        professionalId: updatedJob.professional_id,
+        budgetMin: updatedJob.budget_min,
+        budgetMax: updatedJob.budget_max,
+        deadline: updatedJob.deadline,
+        requirements: updatedJob.requirements,
+        images: updatedJob.images || [],
+        createdAt: updatedJob.created_at,
+        updatedAt: updatedJob.updated_at,
+        client: updatedJob.client,
+        professional: updatedJob.professional,
+      };
+
+      return {
+        success: true,
+        data: job,
+      };
+    } catch (error) {
+      console.error('Error updating job:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to update job',
+      };
+    }
+  }
+
   // Job Applications
   async getJobApplications(jobId: string): Promise<ApiResponse<any[]>> {
     try {

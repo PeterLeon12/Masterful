@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/contexts/OptimalAuthContext';
 import { serviceCategories } from '@/constants/service-categories';
 import { Plus, Search, MapPin, Clock, Bell } from 'lucide-react-native';
@@ -37,6 +37,13 @@ export default function HomeScreen() {
     loadJobs();
   }, []);
 
+  // Refresh data when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      loadJobs();
+    }, [])
+  );
+
   const renderCategoryCard = ({ item }: { item: typeof serviceCategories[0] }) => (
     <TouchableOpacity
       style={[styles.categoryCard, { borderLeftColor: item.color }]}
@@ -51,7 +58,10 @@ export default function HomeScreen() {
   );
 
   const renderJobCard = ({ item }: { item: any }) => (
-    <TouchableOpacity style={styles.jobCard}>
+    <TouchableOpacity 
+      style={styles.jobCard}
+      onPress={() => router.push(`/job/${item.id}`)}
+    >
       <View style={styles.jobHeader}>
         <Text style={styles.jobTitle}>{item.title}</Text>
         <Text style={[
@@ -67,10 +77,10 @@ export default function HomeScreen() {
           <Text style={styles.jobDetailText}>
             {(() => {
               try {
-                const location = JSON.parse(item.location);
+                const location = item.location ? JSON.parse(item.location) : { city: 'N/A', county: 'N/A' };
                 return `${location.county}, ${location.city}`;
               } catch {
-                return item.location;
+                return item.location || 'Locație necunoscută';
               }
             })()}
           </Text>
@@ -137,6 +147,17 @@ export default function HomeScreen() {
             >
               <Search size={20} color="#3b82f6" />
               <Text style={styles.secondaryActionText}>Găsește meșteri</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {user?.role === 'CLIENT' && (
+          <View style={styles.clientActions}>
+            <TouchableOpacity
+              style={styles.myJobsButton}
+              onPress={() => router.push('/my-jobs')}
+            >
+              <Text style={styles.myJobsButtonText}>Vezi job-urile mele</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -252,6 +273,22 @@ const styles = StyleSheet.create({
     color: '#3b82f6',
     fontSize: 16,
     fontWeight: '600',
+  },
+  clientActions: {
+    paddingHorizontal: 20,
+    marginBottom: 32,
+  },
+  myJobsButton: {
+    backgroundColor: '#f3f4f6',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  myJobsButtonText: {
+    color: '#374151',
+    fontSize: 14,
+    fontWeight: '500',
   },
   section: {
     paddingHorizontal: 20,

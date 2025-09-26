@@ -1,87 +1,57 @@
--- URGENT: Fix RLS Policies for Romanian Marketplace App
--- This will allow your app to work properly
+-- Fix RLS policies for jobs table
+-- This script will help resolve the "new row violates row-level security policy" error
 
--- Step 1: Disable RLS on all tables temporarily
-ALTER TABLE users DISABLE ROW LEVEL SECURITY;
-ALTER TABLE profiles DISABLE ROW LEVEL SECURITY;
-ALTER TABLE professionals DISABLE ROW LEVEL SECURITY;
-ALTER TABLE clients DISABLE ROW LEVEL SECURITY;
-ALTER TABLE jobs DISABLE ROW LEVEL SECURITY;
-ALTER TABLE job_applications DISABLE ROW LEVEL SECURITY;
-ALTER TABLE reviews DISABLE ROW LEVEL SECURITY;
-ALTER TABLE messages DISABLE ROW LEVEL SECURITY;
-ALTER TABLE payments DISABLE ROW LEVEL SECURITY;
-ALTER TABLE subscriptions DISABLE ROW LEVEL SECURITY;
-ALTER TABLE notifications DISABLE ROW LEVEL SECURITY;
+-- First, let's check the current RLS policies
+-- You can run this in your Supabase SQL editor to see what policies exist:
+-- SELECT * FROM pg_policies WHERE tablename = 'jobs';
 
--- Step 2: Re-enable RLS
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE professionals ENABLE ROW LEVEL SECURITY;
-ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
+-- Drop existing policies if they exist (be careful with this in production)
+DROP POLICY IF EXISTS "Users can view all jobs" ON jobs;
+DROP POLICY IF EXISTS "Users can insert their own jobs" ON jobs;
+DROP POLICY IF EXISTS "Users can update their own jobs" ON jobs;
+DROP POLICY IF EXISTS "Users can delete their own jobs" ON jobs;
+
+-- Create new, more permissive policies for the jobs table
+-- These policies assume you have a 'client_id' column that references the user
+
+-- Policy 1: Allow authenticated users to view all jobs
+CREATE POLICY "Allow authenticated users to view jobs" ON jobs
+    FOR SELECT
+    TO authenticated
+    USING (true);
+
+-- Policy 2: Allow authenticated users to insert jobs (for creating new jobs)
+CREATE POLICY "Allow authenticated users to insert jobs" ON jobs
+    FOR INSERT
+    TO authenticated
+    WITH CHECK (true);
+
+-- Policy 3: Allow users to update their own jobs
+CREATE POLICY "Allow users to update their own jobs" ON jobs
+    FOR UPDATE
+    TO authenticated
+    USING (auth.uid()::text = client_id)
+    WITH CHECK (auth.uid()::text = client_id);
+
+-- Policy 4: Allow users to delete their own jobs
+CREATE POLICY "Allow users to delete their own jobs" ON jobs
+    FOR DELETE
+    TO authenticated
+    USING (auth.uid()::text = client_id);
+
+-- Alternative: If you want to allow all authenticated users to perform all operations
+-- (less secure but simpler for development)
+-- CREATE POLICY "Allow all operations for authenticated users" ON jobs
+--     FOR ALL
+--     TO authenticated
+--     USING (true)
+--     WITH CHECK (true);
+
+-- Make sure RLS is enabled on the jobs table
 ALTER TABLE jobs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE job_applications ENABLE ROW LEVEL SECURITY;
-ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
-ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
-ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
-ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
 
--- Step 3: Create permissive policies for development
--- Users table
-DROP POLICY IF EXISTS "Allow all operations on users" ON users;
-CREATE POLICY "Allow all operations on users" ON users
-  FOR ALL USING (true) WITH CHECK (true);
-
--- Profiles table
-DROP POLICY IF EXISTS "Allow all operations on profiles" ON profiles;
-CREATE POLICY "Allow all operations on profiles" ON profiles
-  FOR ALL USING (true) WITH CHECK (true);
-
--- Professionals table
-DROP POLICY IF EXISTS "Allow all operations on professionals" ON professionals;
-CREATE POLICY "Allow all operations on professionals" ON professionals
-  FOR ALL USING (true) WITH CHECK (true);
-
--- Clients table
-DROP POLICY IF EXISTS "Allow all operations on clients" ON clients;
-CREATE POLICY "Allow all operations on clients" ON clients
-  FOR ALL USING (true) WITH CHECK (true);
-
--- Jobs table
-DROP POLICY IF EXISTS "Allow all operations on jobs" ON jobs;
-CREATE POLICY "Allow all operations on jobs" ON jobs
-  FOR ALL USING (true) WITH CHECK (true);
-
--- Job applications table
-DROP POLICY IF EXISTS "Allow all operations on job_applications" ON job_applications;
-CREATE POLICY "Allow all operations on job_applications" ON job_applications
-  FOR ALL USING (true) WITH CHECK (true);
-
--- Reviews table
-DROP POLICY IF EXISTS "Allow all operations on reviews" ON reviews;
-CREATE POLICY "Allow all operations on reviews" ON reviews
-  FOR ALL USING (true) WITH CHECK (true);
-
--- Messages table
-DROP POLICY IF EXISTS "Allow all operations on messages" ON messages;
-CREATE POLICY "Allow all operations on messages" ON messages
-  FOR ALL USING (true) WITH CHECK (true);
-
--- Payments table
-DROP POLICY IF EXISTS "Allow all operations on payments" ON payments;
-CREATE POLICY "Allow all operations on payments" ON payments
-  FOR ALL USING (true) WITH CHECK (true);
-
--- Subscriptions table
-DROP POLICY IF EXISTS "Allow all operations on subscriptions" ON subscriptions;
-CREATE POLICY "Allow all operations on subscriptions" ON subscriptions
-  FOR ALL USING (true) WITH CHECK (true);
-
--- Notifications table
-DROP POLICY IF EXISTS "Allow all operations on notifications" ON notifications;
-CREATE POLICY "Allow all operations on notifications" ON notifications
-  FOR ALL USING (true) WITH CHECK (true);
-
--- Success message
-SELECT 'RLS policies fixed successfully! Your app should now work.' as message;
+-- Optional: If you want to allow anonymous users to view jobs (for public job listings)
+-- CREATE POLICY "Allow anonymous users to view jobs" ON jobs
+--     FOR SELECT
+--     TO anon
+--     USING (true);

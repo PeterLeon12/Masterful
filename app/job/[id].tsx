@@ -8,7 +8,8 @@ import JobApplicationCard from '@/components/JobApplicationCard';
 import JobApplicationForm from '@/components/JobApplicationForm';
 import { 
   ArrowLeft, MapPin, Clock, DollarSign, User, 
-  Calendar, AlertCircle, CheckCircle, MessageCircle, Send 
+  Calendar, AlertCircle, CheckCircle, MessageCircle, Send, 
+  Edit, Trash2, MoreVertical 
 } from 'lucide-react-native';
 
 
@@ -34,6 +35,7 @@ export default function JobDetailsScreen() {
       const response = await supabaseApiClient.getJobById(id!);
       
       if (response.success && response.data) {
+        console.log('Job data received:', response.data);
         setJob(response.data);
       } else {
         Alert.alert('Eroare', 'Nu s-a putut încărca detaliile job-ului');
@@ -121,6 +123,45 @@ export default function JobDetailsScreen() {
   const handleMessageApplication = (applicationId: string) => {
     // Navigate to chat with the professional
     router.push(`/chat/${applicationId}`);
+  };
+
+  const handleDeleteJob = async () => {
+    Alert.alert(
+      'Șterge job-ul',
+      'Ești sigur că vrei să ștergi acest job? Această acțiune nu poate fi anulată.',
+      [
+        { text: 'Anulează', style: 'cancel' },
+        {
+          text: 'Șterge',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsProcessing('delete');
+              console.log('Attempting to delete job with ID:', id);
+              const response = await supabaseApiClient.deleteJob(id!);
+              console.log('Delete response:', response);
+              if (response.success) {
+                Alert.alert('Succes', 'Job-ul a fost șters cu succes', [
+                  { text: 'OK', onPress: () => router.back() }
+                ]);
+              } else {
+                console.error('Delete failed:', response.error);
+                Alert.alert('Eroare', `Nu s-a putut șterge job-ul: ${response.error}`);
+              }
+            } catch (error) {
+              console.error('Error deleting job:', error);
+              Alert.alert('Eroare', 'A apărut o eroare la ștergerea job-ului');
+            } finally {
+              setIsProcessing(null);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleEditJob = () => {
+    router.push(`/(tabs)/post-job?edit=${id}`);
   };
 
   const handleSubmitApplication = async (applicationData: {
@@ -226,8 +267,8 @@ export default function JobDetailsScreen() {
     );
   }
 
-  const location = JSON.parse(job.location);
-  const budget = JSON.parse(job.budget);
+  const location = job.location ? JSON.parse(job.location) : { city: 'N/A', county: 'N/A' };
+  const budget = { min: job.budgetMin, max: job.budgetMax };
   const isClient = user?.role === 'CLIENT';
   const hasApplications = job.applications && job.applications.length > 0;
 
@@ -238,7 +279,27 @@ export default function JobDetailsScreen() {
           <ArrowLeft size={24} color="#111827" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Detalii job</Text>
-        <View style={styles.placeholder} />
+        {isClient && job.clientId === user?.id && job.status === 'OPEN' && (
+          <View style={styles.headerActions}>
+            <TouchableOpacity 
+              style={styles.headerActionButton}
+              onPress={handleEditJob}
+              disabled={isProcessing === 'delete'}
+            >
+              <Edit size={20} color="#f59e0b" />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.headerActionButton}
+              onPress={handleDeleteJob}
+              disabled={isProcessing === 'delete'}
+            >
+              <Trash2 size={20} color="#ef4444" />
+            </TouchableOpacity>
+          </View>
+        )}
+        {(!isClient || job.clientId !== user?.id || job.status !== 'OPEN') && (
+          <View style={styles.placeholder} />
+        )}
       </View>
 
       <ScrollView 
@@ -277,7 +338,10 @@ export default function JobDetailsScreen() {
           <View style={styles.detailItem}>
             <DollarSign size={20} color="#6b7280" />
             <Text style={styles.detailText}>
-              {budget.min} - {budget.max} {budget.currency}
+              {budget.min && budget.max 
+                ? `${budget.min} - ${budget.max} RON`
+                : 'Preț negociabil'
+              }
             </Text>
           </View>
 
@@ -403,6 +467,15 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     width: 40,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  headerActionButton: {
+    padding: 8,
+    borderRadius: 6,
+    backgroundColor: '#f3f4f6',
   },
   content: {
     flex: 1,

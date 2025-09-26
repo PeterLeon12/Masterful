@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLocalSearchParams, router } from 'expo-router';
 import { useAuth } from '@/contexts/OptimalAuthContext';
 import { serviceCategories } from '@/constants/service-categories';
 import EnhancedLocationPicker from '@/components/EnhancedLocationPicker';
-import { supabaseApiClient } from '@/services/supabaseApi';
+import { supabaseApiClient, Job } from '@/services/supabaseApi';
 import { useApiError } from '@/hooks/useApiError';
 
 interface Location {
@@ -15,14 +16,59 @@ interface Location {
 export default function PostJobScreen() {
   const { user } = useAuth();
   const { error, clearError } = useApiError();
+  const { edit } = useLocalSearchParams<{ edit?: string }>();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<Location | undefined>();
   const [urgency, setUrgency] = useState<'low' | 'medium' | 'high'>('medium');
   const [isLoading, setIsLoading] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [originalJob, setOriginalJob] = useState<Job | null>(null);
 
   const isClient = user?.role === 'CLIENT';
+
+  // Load job data for editing
+  useEffect(() => {
+    if (edit) {
+      setIsEditMode(true);
+      loadJobForEdit(edit);
+    }
+  }, [edit]);
+
+  const loadJobForEdit = async (jobId: string) => {
+    try {
+      setIsLoading(true);
+      const response = await supabaseApiClient.getJobById(jobId);
+      if (response.success && response.data) {
+        const job = response.data;
+        setOriginalJob(job);
+        setTitle(job.title);
+        setDescription(job.description);
+        setSelectedCategory(job.category);
+        
+        // Parse location
+        if (job.location) {
+          try {
+            const location = JSON.parse(job.location);
+            setSelectedLocation({ county: location.county, city: location.city });
+          } catch (error) {
+            console.error('Error parsing location:', error);
+          }
+        }
+        
+        // Set urgency based on job data (you might need to add urgency field to your job model)
+        setUrgency('medium'); // Default for now
+      } else {
+        Alert.alert('Eroare', 'Nu s-a putut încărca job-ul pentru editare');
+      }
+    } catch (error) {
+      console.error('Error loading job for edit:', error);
+      Alert.alert('Eroare', 'A apărut o eroare la încărcarea job-ului');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   interface UrgencyOption {
     id: 'low' | 'medium' | 'high';
@@ -63,23 +109,35 @@ export default function PostJobScreen() {
         }
       };
 
-      const response = await supabaseApiClient.createJob(jobData, user?.id);
+      let response;
+      if (isEditMode && originalJob) {
+        // Update existing job
+        response = await supabaseApiClient.updateJob(originalJob.id, jobData, user?.id);
+      } else {
+        // Create new job
+        response = await supabaseApiClient.createJob(jobData, user?.id);
+      }
       
       if (response.success) {
         Alert.alert(
           'Succes!',
-          'Sarcina a fost postată cu succes!',
+          isEditMode ? 'Job-ul a fost actualizat cu succes!' : 'Sarcina a fost postată cu succes!',
           [{ text: 'OK', onPress: () => {
-            // Reset form
-            setTitle('');
-            setDescription('');
-            setSelectedCategory(null);
-            setSelectedLocation(undefined);
-            setUrgency('medium');
+            if (isEditMode) {
+              // Navigate back to My Jobs after successful update
+              router.push('/my-jobs');
+            } else {
+              // Reset form only for new jobs
+              setTitle('');
+              setDescription('');
+              setSelectedCategory(null);
+              setSelectedLocation(undefined);
+              setUrgency('medium');
+            }
           }}]
         );
       } else {
-        throw new Error(response.error || 'Failed to create job');
+        throw new Error(response.error || `Failed to ${isEditMode ? 'update' : 'create'} job`);
       }
     } catch (error) {
       console.error('Error creating job:', error);
@@ -93,10 +151,10 @@ export default function PostJobScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>
-          {isClient ? 'Postează o sarcină' : 'Adaugă proiect'}
+          {isEditMode ? 'Editează job-ul' : (isClient ? 'Postează o sarcină' : 'Adaugă proiect')}
         </Text>
         <Text style={styles.subtitle}>
-          {isClient ? 'Descrie ce ai nevoie și găsește meșterul potrivit' : 'Adaugă un nou proiect în portofoliul tău'}
+          {isEditMode ? 'Modifică detaliile job-ului' : (isClient ? 'Descrie ce ai nevoie și găsește meșterul potrivit' : 'Adaugă un nou proiect în portofoliul tău')}
         </Text>
       </View>
 
@@ -204,8 +262,8 @@ export default function PostJobScreen() {
         >
           <Text style={styles.submitButtonText}>
             {isLoading 
-              ? (isClient ? 'Se postează...' : 'Se adaugă...') 
-              : (isClient ? 'Postează sarcina' : 'Adaugă proiectul')
+              ? (isEditMode ? 'Se actualizează...' : (isClient ? 'Se postează...' : 'Se adaugă...'))
+              : (isEditMode ? 'Actualizează job-ul' : (isClient ? 'Postează sarcina' : 'Adaugă proiectul'))
             }
           </Text>
         </TouchableOpacity>
