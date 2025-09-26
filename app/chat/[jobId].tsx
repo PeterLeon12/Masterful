@@ -108,10 +108,10 @@ export default function ChatScreen() {
               app.job?.client_id !== user?.id
             );
             console.log('Found client application:', clientApplication);
-            if (clientApplication) {
-              setOtherUserId(clientApplication.job?.client_id);
+            if (clientApplication && clientApplication.job?.client_id) {
+              setOtherUserId(clientApplication.job.client_id);
               setOtherUserName('Client'); // We don't have client name in application data
-              console.log('Set otherUserId for professional:', clientApplication.job?.client_id);
+              console.log('Set otherUserId for professional:', clientApplication.job.client_id);
               setIsLoadingOtherUser(false);
               return;
             }
