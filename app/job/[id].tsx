@@ -17,6 +17,8 @@ export default function JobDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuth();
   const [job, setJob] = useState<Job | null>(null);
+  const [applications, setApplications] = useState<JobApplication[]>([]);
+  const [hasApplied, setHasApplied] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
@@ -37,6 +39,11 @@ export default function JobDetailsScreen() {
       if (response.success && response.data) {
         console.log('Job data received:', response.data);
         setJob(response.data);
+        
+        // Load applications if user is the job owner or a professional
+        if ((user?.role === 'CLIENT' && response.data.clientId === user.id) || user?.role === 'PROFESSIONAL') {
+          await loadApplications();
+        }
       } else {
         Alert.alert('Eroare', 'Nu s-a putut încărca detaliile job-ului');
         router.back();
@@ -47,6 +54,24 @@ export default function JobDetailsScreen() {
       router.back();
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadApplications = async () => {
+    try {
+      const response = await supabaseApiClient.getJobApplications(id!);
+      if (response.success && response.data) {
+        console.log('Applications loaded:', response.data);
+        setApplications(response.data);
+        
+        // Check if current user has already applied
+        if (user?.role === 'PROFESSIONAL') {
+          const userApplication = response.data.find(app => app.professional_id === user.id);
+          setHasApplied(!!userApplication);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading applications:', error);
     }
   };
 
@@ -122,7 +147,7 @@ export default function JobDetailsScreen() {
 
   const handleMessageApplication = (applicationId: string) => {
     // Navigate to chat with the professional
-    router.push(`/chat/${applicationId}`);
+    router.push(`/chat/${id}`);
   };
 
   const handleDeleteJob = async () => {
@@ -173,7 +198,7 @@ export default function JobDetailsScreen() {
     
     setIsSubmittingApplication(true);
     try {
-      const response = await supabaseApiClient.applyForJob(id, applicationData);
+      const response = await supabaseApiClient.applyForJob(id, applicationData, user?.id);
       
       if (response.success) {
         Alert.alert(
@@ -189,7 +214,17 @@ export default function JobDetailsScreen() {
       }
     } catch (error) {
       console.error('Error submitting application:', error);
-      Alert.alert('Eroare', 'Nu s-a putut trimite aplicația. Te rog încearcă din nou.');
+      
+      // Handle duplicate application error
+      if (error instanceof Error && error.message.includes('duplicate key value violates unique constraint')) {
+        Alert.alert(
+          'Aplicație deja trimisă',
+          'Ai aplicat deja la acest job. Nu poți trimite o nouă aplicație.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        Alert.alert('Eroare', 'Nu s-a putut trimite aplicația. Te rog încearcă din nou.');
+      }
     } finally {
       setIsSubmittingApplication(false);
     }
@@ -369,24 +404,24 @@ export default function JobDetailsScreen() {
         </View>
 
         {/* Applications Section */}
-        {isClient && (
+        {isClient && job.clientId === user?.id && (
           <View style={styles.applicationsSection}>
             <View style={styles.applicationsHeader}>
               <Text style={styles.sectionTitle}>
-                Aplicații ({job.applications?.length || 0})
+                Aplicații ({applications.length})
               </Text>
-              {hasApplications && (
+              {applications.length > 0 && (
                 <View style={styles.applicationsStatus}>
                   <CheckCircle size={16} color="#10b981" />
                   <Text style={styles.applicationsStatusText}>
-                    {job.applications?.filter(app => app.status === 'ACCEPTED').length || 0} acceptate
+                    {applications.filter(app => app.status === 'ACCEPTED').length} acceptate
                   </Text>
                 </View>
               )}
             </View>
 
-            {hasApplications ? (
-              job.applications!.map((application) => (
+            {applications.length > 0 ? (
+              applications.map((application) => (
                 <JobApplicationCard
                   key={application.id}
                   application={application}
@@ -413,7 +448,15 @@ export default function JobDetailsScreen() {
         {/* Professional Application Section */}
         {!isClient && user?.role === 'PROFESSIONAL' && job.status === 'OPEN' && (
           <View style={styles.professionalSection}>
-            {showApplicationForm ? (
+            {hasApplied ? (
+              <View style={styles.applicationStatus}>
+                <CheckCircle size={24} color="#10b981" />
+                <Text style={styles.applicationStatusTitle}>Aplicație trimisă</Text>
+                <Text style={styles.applicationStatusText}>
+                  Ai aplicat deja la acest job. Clientul va fi notificat și va putea să te contacteze.
+                </Text>
+              </View>
+            ) : showApplicationForm ? (
               <JobApplicationForm
                 jobId={id!}
                 onSubmit={handleSubmitApplication}
@@ -649,5 +692,26 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  applicationStatus: {
+    backgroundColor: '#f0fdf4',
+    borderRadius: 12,
+    padding: 20,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#bbf7d0',
+  },
+  applicationStatusTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#059669',
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  applicationStatusText: {
+    fontSize: 14,
+    color: '#047857',
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });

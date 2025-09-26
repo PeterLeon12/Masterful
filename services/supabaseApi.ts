@@ -861,51 +861,74 @@ class SupabaseApiClient {
   // Conversations
   async getConversations(limit?: number, offset?: number): Promise<ApiResponse<{ conversations: any[]; limit: number; offset: number }>> {
     try {
+      console.log('API: Getting conversations');
+      
+      // Get current user from auth context instead of supabase.auth
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
+        console.error('No authenticated user found');
         return {
           success: false,
           error: 'User not authenticated',
         };
       }
-
-      // Get jobs where user is either client or professional
-      const { data: jobs, error: jobsError } = await supabase
-        .from('jobs')
+      
+      console.log('Current user ID:', user.id);
+      
+      // Get unique job conversations for the current user
+      const { data: messages, error: messagesError } = await supabase
+        .from('messages')
         .select(`
-          id,
-          title,
-          client_id,
-          professional_id,
-          updated_at
+          job_id,
+          job:jobs!messages_job_id_fkey(id, title, client_id, professional_id),
+          sender:users!messages_sender_id_fkey(id, name, avatar),
+          recipient:users!messages_recipient_id_fkey(id, name, avatar),
+          content,
+          created_at,
+          sender_id,
+          recipient_id
         `)
-        .or(`client_id.eq.${user.id},professional_id.eq.${user.id}`)
-        .order('updated_at', { ascending: false })
-        .range(offset || 0, (offset || 0) + (limit || 20) - 1);
+        .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
+        .order('created_at', { ascending: false });
 
-      if (jobsError) {
-        console.error('Error fetching conversations:', jobsError);
+      if (messagesError) {
+        console.error('Error fetching conversations:', messagesError);
         return {
           success: false,
-          error: jobsError.message,
+          error: messagesError.message,
         };
       }
 
-      // For now, return jobs as conversations
-      // In a real app, you'd join with messages to get the last message
-      const conversations = (jobs || []).map(job => ({
-        id: job.id,
-        jobId: job.id,
-        jobTitle: job.title,
-        otherUser: {
-          id: job.client_id === user.id ? job.professional_id : job.client_id,
-          name: 'Other User', // You'd fetch this from users table
-        },
-        lastMessage: null,
-        unreadCount: 0,
-        updatedAt: job.updated_at,
-      }));
+      // Group messages by job_id and get the latest message for each job
+      const jobConversations = new Map();
+      
+      (messages || []).forEach(message => {
+        if (!message.job) return;
+        
+        const jobId = message.job_id;
+        if (!jobConversations.has(jobId)) {
+          jobConversations.set(jobId, {
+            id: jobId,
+            jobId: jobId,
+            jobTitle: message.job.title,
+            otherUser: message.sender_id === user.id ? message.recipient : message.sender,
+            lastMessage: {
+              content: message.content,
+              createdAt: message.created_at,
+              senderId: message.sender_id,
+            },
+            unreadCount: 0,
+            updatedAt: message.created_at,
+          });
+        }
+      });
+
+      const conversations = Array.from(jobConversations.values())
+        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+        .slice(offset || 0, (offset || 0) + (limit || 20));
+
+      console.log('API: Conversations loaded:', conversations.length);
 
       return {
         success: true,
@@ -925,29 +948,28 @@ class SupabaseApiClient {
   }
 
   // Job Applications
-  async applyForJob(jobId: string, applicationData: any): Promise<ApiResponse<any>> {
+  async applyForJob(jobId: string, applicationData: any, userId?: string): Promise<ApiResponse<any>> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      console.log('API: Applying for job with ID:', jobId, 'Data:', applicationData, 'User ID:', userId);
       
-      if (!user) {
-        return {
-          success: false,
-          error: 'User not authenticated',
-        };
-      }
-
       const { data, error } = await supabase
         .from('job_applications')
         .insert({
           job_id: jobId,
-          professional_id: user.id,
-          cover_letter: applicationData.coverLetter,
-          proposed_rate: applicationData.proposedRate,
-          estimated_duration: applicationData.estimatedDuration,
+          professional_id: userId,
+          cover_letter: applicationData.coverLetter || applicationData.proposal,
+          proposed_rate: applicationData.proposedRate || applicationData.price,
+          estimated_duration: applicationData.estimatedDuration || applicationData.estimatedTime,
           status: 'PENDING',
         })
-        .select()
+        .select(`
+          *,
+          professional:users!job_applications_professional_id_fkey(id, name, email, avatar),
+          job:jobs!job_applications_job_id_fkey(id, title, client_id)
+        `)
         .single();
+
+      console.log('API: Application result - data:', data, 'error:', error);
 
       if (error) {
         console.error('Error applying for job:', error);
@@ -955,6 +977,29 @@ class SupabaseApiClient {
           success: false,
           error: error.message,
         };
+      }
+
+      // Create initial message in chat
+      if (data && data.job) {
+        const applicationMessage = `Am aplicat la job-ul "${data.job.title}". ${applicationData.coverLetter || applicationData.proposal || 'Propunere: ' + (applicationData.proposedRate || applicationData.price) + ' RON, timp estimat: ' + (applicationData.estimatedDuration || applicationData.estimatedTime)}`;
+        
+        const { error: messageError } = await supabase
+          .from('messages')
+          .insert({
+            job_id: jobId,
+            sender_id: userId,
+            recipient_id: data.job.client_id,
+            content: applicationMessage,
+            message_type: 'TEXT',
+            is_read: false,
+          });
+
+        if (messageError) {
+          console.error('Error creating application message:', messageError);
+          // Don't fail the application if message creation fails
+        } else {
+          console.log('Application message created successfully');
+        }
       }
 
       return {
@@ -966,6 +1011,58 @@ class SupabaseApiClient {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to apply for job',
+      };
+    }
+  }
+
+  // Get job applications for a specific job
+  async getJobApplications(jobId: string): Promise<ApiResponse<JobApplication[]>> {
+    try {
+      console.log('API: Getting applications for job ID:', jobId);
+      
+      const { data, error } = await supabase
+        .from('job_applications')
+        .select(`
+          *,
+          professional:users!job_applications_professional_id_fkey(id, name, email, avatar),
+          job:jobs!job_applications_job_id_fkey(id, title, client_id)
+        `)
+        .eq('job_id', jobId)
+        .order('created_at', { ascending: false });
+
+      console.log('API: Applications result - data:', data, 'error:', error);
+
+      if (error) {
+        console.error('Error fetching applications:', error);
+        return {
+          success: false,
+          error: error.message,
+        };
+      }
+
+      const applications: JobApplication[] = (data || []).map(app => ({
+        id: app.id,
+        job_id: app.job_id,
+        professional_id: app.professional_id,
+        proposal: app.cover_letter,
+        price: app.proposed_rate,
+        estimated_time: app.estimated_duration,
+        status: app.status,
+        created_at: app.created_at,
+        updated_at: app.updated_at,
+        professional: app.professional,
+        job: app.job,
+      }));
+
+      return {
+        success: true,
+        data: applications,
+      };
+    } catch (error) {
+      console.error('Error fetching applications:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch applications',
       };
     }
   }
@@ -1296,9 +1393,7 @@ class SupabaseApiClient {
         .select(`
           *,
           professional:users!job_applications_professional_id_fkey(id, name, email, avatar),
-          professional_profile:professionals!job_applications_professional_id_fkey(
-            id, hourly_rate, rating, review_count, bio, categories
-          )
+          job:jobs!job_applications_job_id_fkey(id, title, client_id)
         `)
         .eq('job_id', jobId)
         .order('created_at', { ascending: false });

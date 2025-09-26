@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useAuth } from '@/contexts/OptimalAuthContext';
 import { supabaseApiClient } from '@/services/supabaseApi';
-import { SupabaseRealtimeChat } from '@/components/SupabaseRealtimeChat';
+import { RealtimeChat } from '@/components/RealtimeChat';
 import { ArrowLeft, User, Phone } from 'lucide-react-native';
 
 interface Message {
@@ -68,7 +68,95 @@ export default function ChatScreen() {
     }
   };
 
-  const otherUser = getOtherUser();
+  const [otherUserId, setOtherUserId] = useState<string | null>(null);
+  const [otherUserName, setOtherUserName] = useState<string>('Utilizator');
+  const [isLoadingOtherUser, setIsLoadingOtherUser] = useState(false);
+
+  useEffect(() => {
+    if (job && user) {
+      loadOtherUser();
+    }
+  }, [job, user]);
+
+  const loadOtherUser = async () => {
+    try {
+      setIsLoadingOtherUser(true);
+      console.log('Loading other user for job:', jobId, 'User role:', user?.role);
+      
+      // Try to get from job applications first
+      try {
+        const response = await supabaseApiClient.getJobApplications(jobId!);
+        console.log('Job applications response:', response);
+        
+        if (response.success && response.data && response.data.length > 0) {
+          if (user?.role === 'CLIENT') {
+            // Client: find the professional who applied to their job
+            const professionalApplication = response.data.find(app => 
+              app.professional_id !== user?.id
+            );
+            console.log('Found professional application:', professionalApplication);
+            if (professionalApplication) {
+              setOtherUserId(professionalApplication.professional_id);
+              setOtherUserName(professionalApplication.professional?.name || 'Utilizator');
+              console.log('Set otherUserId for client:', professionalApplication.professional_id);
+              setIsLoadingOtherUser(false);
+              return;
+            }
+          } else {
+            // Professional: find the client who posted the job
+            const clientApplication = response.data.find(app => 
+              app.job?.client_id !== user?.id
+            );
+            console.log('Found client application:', clientApplication);
+            if (clientApplication) {
+              setOtherUserId(clientApplication.job?.client_id);
+              setOtherUserName('Client'); // We don't have client name in application data
+              console.log('Set otherUserId for professional:', clientApplication.job?.client_id);
+              setIsLoadingOtherUser(false);
+              return;
+            }
+          }
+        }
+      } catch (appError) {
+        console.log('Could not load applications, using fallback:', appError);
+      }
+
+      // Fallback to job data
+      const otherUser = getOtherUser();
+      console.log('Fallback otherUser:', otherUser);
+      if (otherUser) {
+        setOtherUserId(otherUser.id);
+        setOtherUserName(otherUser.name || 'Utilizator');
+        console.log('Set otherUserId from job data:', otherUser.id);
+      } else {
+        console.error('Could not determine other user - no applications and no job data');
+        // Set a default recipient for testing
+        if (user?.role === 'CLIENT') {
+          // For client, we need to find any professional who applied
+          // This is a fallback - in real scenario, there should be applications
+          console.log('No applications found for client, cannot determine recipient');
+          // Try to get the professional from the job data directly
+          if (job?.professional) {
+            setOtherUserId(job.professional.id);
+            setOtherUserName(job.professional.name || 'Utilizator');
+            console.log('Set otherUserId from job professional:', job.professional.id);
+          }
+        } else {
+          // For professional, use the job's client
+          if (job?.client) {
+            setOtherUserId(job.client.id);
+            setOtherUserName(job.client.name || 'Client');
+            console.log('Set otherUserId from job client:', job.client.id);
+          }
+        }
+      }
+      
+      setIsLoadingOtherUser(false);
+    } catch (error) {
+      console.error('Error loading other user:', error);
+      setIsLoadingOtherUser(false);
+    }
+  };
 
   const renderHeader = () => (
     <View style={styles.header}>
@@ -80,22 +168,20 @@ export default function ChatScreen() {
           <ArrowLeft size={24} color="#111827" />
         </TouchableOpacity>
         
-        <View style={styles.userInfo}>
-          <Text style={styles.userName}>
-            {otherUser?.name || 'Utilizator'}
-          </Text>
-          <Text style={styles.jobTitle}>
-            {job?.title || 'Job'}
-          </Text>
-        </View>
+               <View style={styles.userInfo}>
+                 <Text style={styles.userName}>
+                   {otherUserName}
+                 </Text>
+                 <Text style={styles.jobTitle}>
+                   {job?.title || 'Job'}
+                 </Text>
+               </View>
       </View>
 
       <View style={styles.headerActions}>
-        {otherUser?.phone && (
-          <TouchableOpacity style={styles.actionButton}>
-            <Phone size={20} color="#3b82f6" />
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity style={styles.actionButton}>
+          <Phone size={20} color="#3b82f6" />
+        </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton}>
           <User size={20} color="#3b82f6" />
         </TouchableOpacity>
@@ -103,7 +189,7 @@ export default function ChatScreen() {
     </View>
   );
 
-  if (isLoading) {
+  if (isLoading || isLoadingOtherUser) {
     return (
       <SafeAreaView style={styles.container}>
         {renderHeader()}
@@ -114,17 +200,23 @@ export default function ChatScreen() {
     );
   }
 
-  return (
-    <SafeAreaView style={styles.container}>
-      {renderHeader()}
-      
-      <SupabaseRealtimeChat
-        jobId={jobId!}
-        recipientId={otherUser?.id || 'unknown'}
-        recipientName={otherUser?.name || 'Utilizator'}
-      />
-    </SafeAreaView>
-  );
+        return (
+          <SafeAreaView style={styles.container}>
+            {renderHeader()}
+            
+            {otherUserId ? (
+              <RealtimeChat
+                roomName={`job-${jobId}`}
+                recipientId={otherUserId}
+                recipientName={otherUserName}
+              />
+            ) : (
+              <View style={styles.loadingContainer}>
+                <Text style={styles.loadingText}>Se încarcă conversația...</Text>
+              </View>
+            )}
+          </SafeAreaView>
+        );
 }
 
 const styles = StyleSheet.create({

@@ -122,36 +122,36 @@ export const SupabaseRealtimeChat: React.FC<SupabaseRealtimeChatProps> = ({
   const sendMessage = async () => {
     if (!newMessage.trim() || !user) return;
 
-    const messageId = Date.now().toString();
-    const message: ChatMessage = {
-      id: messageId,
-      content: newMessage.trim(),
-      user: {
-        name: user.name,
-        id: user.id,
-      },
-      createdAt: new Date().toISOString(),
-      roomName,
-    };
-
     try {
-      // Store message in database
-      const { error: dbError } = await supabase
+      // Store message in database (let Supabase generate the UUID)
+      const { data: insertedMessage, error: dbError } = await supabase
         .from('messages')
         .insert({
-          id: messageId,
-          content: message.content,
+          content: newMessage.trim(),
           sender_id: user.id,
           recipient_id: recipientId,
           job_id: jobId,
           message_type: 'TEXT',
           is_read: false,
-        });
+        })
+        .select()
+        .single();
 
       if (dbError) {
         console.error('Error storing message:', dbError);
         return;
       }
+
+      const message: ChatMessage = {
+        id: insertedMessage.id,
+        content: insertedMessage.content,
+        user: {
+          name: user.name,
+          id: user.id,
+        },
+        createdAt: insertedMessage.created_at,
+        roomName,
+      };
 
       // Broadcast message to all subscribers
       const broadcastResponse = await supabase
