@@ -83,14 +83,14 @@ export default function ChatScreen() {
       setIsLoadingOtherUser(true);
       console.log('Loading other user for job:', jobId, 'User role:', user?.role);
       
-      // Try to get from job applications first
-      try {
-        const response = await supabaseApiClient.getJobApplications(jobId!);
-        console.log('Job applications response:', response);
-        
-        if (response.success && response.data && response.data.length > 0) {
-          if (user?.role === 'CLIENT') {
-            // Client: find the professional who applied to their job
+      // For CLIENT: find any professional who applied to their job
+      if (user?.role === 'CLIENT') {
+        try {
+          const response = await supabaseApiClient.getJobApplications(jobId!);
+          console.log('Job applications response for client:', response);
+          
+          if (response.success && response.data && response.data.length > 0) {
+            // Find the first professional who applied (not the current user)
             const professionalApplication = response.data.find(app => 
               app.professional_id !== user?.id
             );
@@ -102,55 +102,35 @@ export default function ChatScreen() {
               setIsLoadingOtherUser(false);
               return;
             }
-          } else {
-            // Professional: find the client who posted the job
-            const clientApplication = response.data.find(app => 
-              app.job?.client_id !== user?.id
-            );
-            console.log('Found client application:', clientApplication);
-            if (clientApplication && clientApplication.job?.client_id) {
-              setOtherUserId(clientApplication.job.client_id);
-              setOtherUserName('Client'); // We don't have client name in application data
-              console.log('Set otherUserId for professional:', clientApplication.job.client_id);
-              setIsLoadingOtherUser(false);
-              return;
-            }
           }
+        } catch (appError) {
+          console.log('Could not load applications for client:', appError);
         }
-      } catch (appError) {
-        console.log('Could not load applications, using fallback:', appError);
-      }
-
-      // Fallback to job data
-      const otherUser = getOtherUser();
-      console.log('Fallback otherUser:', otherUser);
-      if (otherUser) {
-        setOtherUserId(otherUser.id);
-        setOtherUserName(otherUser.name || 'Utilizator');
-        console.log('Set otherUserId from job data:', otherUser.id);
-      } else {
-        console.error('Could not determine other user - no applications and no job data');
-        // Set a default recipient for testing
-        if (user?.role === 'CLIENT') {
-          // For client, we need to find any professional who applied
-          // This is a fallback - in real scenario, there should be applications
-          console.log('No applications found for client, cannot determine recipient');
-          // Try to get the professional from the job data directly
-          if (job?.professional) {
-            setOtherUserId(job.professional.id);
-            setOtherUserName(job.professional.name || 'Utilizator');
-            console.log('Set otherUserId from job professional:', job.professional.id);
-          }
-        } else {
-          // For professional, use the job's client
-          if (job?.client) {
-            setOtherUserId(job.client.id);
-            setOtherUserName(job.client.name || 'Client');
-            console.log('Set otherUserId from job client:', job.client.id);
-          }
+        
+        // Fallback: use job's professional if available
+        if (job?.professional) {
+          setOtherUserId(job.professional.id);
+          setOtherUserName(job.professional.name || 'Utilizator');
+          console.log('Set otherUserId from job professional for client:', job.professional.id);
+          setIsLoadingOtherUser(false);
+          return;
         }
       }
       
+      // For PROFESSIONAL: find the client who posted the job
+      if (user?.role === 'PROFESSIONAL') {
+        // Use the job's client directly
+        if (job?.client) {
+          setOtherUserId(job.client.id);
+          setOtherUserName(job.client.name || 'Client');
+          console.log('Set otherUserId from job client for professional:', job.client.id);
+          setIsLoadingOtherUser(false);
+          return;
+        }
+      }
+      
+      // If we get here, we couldn't determine the other user
+      console.error('Could not determine other user');
       setIsLoadingOtherUser(false);
     } catch (error) {
       console.error('Error loading other user:', error);

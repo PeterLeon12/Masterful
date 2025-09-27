@@ -118,11 +118,19 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   const switchRole = async (newRole: UserRole) => {
     try {
       if (!user) return;
-      // For now, we'll just update the local user role
-      // In a real app, you might want to implement role switching on the backend
-      const updatedUser = { ...user, role: newRole };
-      await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
-      setUser(updatedUser);
+      
+      // Update role in database
+      const response = await supabaseApiClient.updateUserRole(newRole);
+      
+      if (!response.success || !response.data) {
+        throw new Error(response.error || 'Role switch failed');
+      }
+
+      // Update local user with the updated user data from database
+      await AsyncStorage.setItem('user', JSON.stringify(response.data));
+      setUser(response.data);
+      
+      console.log('Role switched to:', newRole);
     } catch (error) {
       console.error('Role switch error:', error);
       throw error;
@@ -132,13 +140,30 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   const updateProfile = async (updates: Partial<User>) => {
     try {
       if (!user) throw new Error('No user to update');
+      
+      // For role updates, use the updateUserRole method
+      if (updates.role) {
+        const response = await supabaseApiClient.updateUserRole(updates.role);
+        
+        if (!response.success || !response.data) {
+          throw new Error(response.error || 'Role update failed');
+        }
+
+        const updatedUser = response.data;
+        await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+        setUser(updatedUser);
+        return updatedUser;
+      }
+      
+      // For other profile updates, use the regular updateProfile method
       const response = await supabaseApiClient.updateProfile(updates);
       
       if (!response.success || !response.data) {
         throw new Error(response.error || 'Profile update failed');
       }
 
-      const updatedUser = response.data;
+      // Merge the profile data with the current user data
+      const updatedUser = { ...user, ...response.data };
       await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
       return updatedUser;

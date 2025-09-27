@@ -16,7 +16,10 @@ export default function HomeScreen() {
   const loadJobs = async () => {
     try {
       setIsLoading(true);
-      const response = await supabaseApiClient.getJobs({ limit: 5 });
+      const response = await supabaseApiClient.getJobs({ 
+        limit: 5,
+        currentUserId: user?.id // Pass current user ID for TaskRabbit role-based filtering
+      });
       if (response.success && response.data) {
         setJobs(response.data.jobs || []);
       }

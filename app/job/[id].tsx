@@ -445,6 +445,25 @@ export default function JobDetailsScreen() {
           </View>
         )}
 
+        {/* Professional Search Section for Clients */}
+        {isClient && job.clientId === user?.id && job.status === 'OPEN' && (
+          <View style={styles.professionalSearchSection}>
+            <Text style={styles.sectionTitle}>Găsește profesioniști</Text>
+            <Text style={styles.professionalSearchText}>
+              Caută și contactează profesioniști pentru acest job
+            </Text>
+            <TouchableOpacity
+              style={styles.searchProfessionalsButton}
+              onPress={() => router.push(`/professional-search?jobId=${id}&jobTitle=${encodeURIComponent(job.title)}&jobCategory=${encodeURIComponent(job.category)}`)}
+            >
+              <Search size={20} color="#ffffff" />
+              <Text style={styles.searchProfessionalsButtonText}>
+                Caută profesioniști
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Professional Application Section */}
         {!isClient && user?.role === 'PROFESSIONAL' && job.status === 'OPEN' && (
           <View style={styles.professionalSection}>
@@ -713,5 +732,33 @@ const styles = StyleSheet.create({
     color: '#047857',
     textAlign: 'center',
     lineHeight: 20,
+  },
+  professionalSearchSection: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  professionalSearchText: {
+    fontSize: 16,
+    color: '#6b7280',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 24,
+  },
+  searchProfessionalsButton: {
+    backgroundColor: '#10b981',
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  searchProfessionalsButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

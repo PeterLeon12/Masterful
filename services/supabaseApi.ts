@@ -470,8 +470,26 @@ class SupabaseApiClient {
     professionalId?: string;
     limit?: number;
     offset?: number;
+    currentUserId?: string; // Add current user ID for TaskRabbit role-based filtering
   }): Promise<ApiResponse<{ jobs: Job[]; total: number; limit: number; offset: number }>> {
     try {
+      // Get current user role for TaskRabbit-style filtering
+      let currentUserRole = null;
+      if (filters?.currentUserId) {
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', filters.currentUserId)
+          .single();
+        
+        if (userError) {
+          console.error('Error fetching user role:', userError);
+        } else {
+          currentUserRole = userData?.role;
+          console.log('Current user role from database:', currentUserRole);
+        }
+      }
+
       let query = supabase
         .from('jobs')
         .select(`
@@ -479,6 +497,21 @@ class SupabaseApiClient {
           client:users!jobs_client_id_fkey(id, name, email, avatar),
           professional:users!jobs_professional_id_fkey(id, name, email, avatar)
         `);
+
+      // TaskRabbit Model: Role-based job visibility
+      if (currentUserRole === 'CLIENT') {
+        // Clients can only see their own jobs
+        console.log('Filtering jobs for CLIENT - showing only own jobs');
+        query = query.eq('client_id', filters?.currentUserId);
+      } else if (currentUserRole === 'PROFESSIONAL') {
+        // Professionals can see all open jobs + jobs they're assigned to
+        console.log('Filtering jobs for PROFESSIONAL - showing all open jobs + assigned jobs');
+        query = query.or(`status.eq.OPEN,assigned_professional_id.eq.${filters?.currentUserId}`);
+      } else {
+        // Unauthenticated users can only see open jobs
+        console.log('Filtering jobs for unauthenticated user - showing only open jobs');
+        query = query.eq('status', 'OPEN');
+      }
 
       if (filters?.category) {
         query = query.eq('category', filters.category);
@@ -795,6 +828,7 @@ class SupabaseApiClient {
   async sendMessage(jobId: string, messageData: {
     content: string;
     messageType?: 'TEXT' | 'IMAGE' | 'FILE' | 'LOCATION';
+    recipientId?: string; // Add recipientId parameter for TaskRabbit model
   }): Promise<ApiResponse<{ message: Message }>> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -806,14 +840,86 @@ class SupabaseApiClient {
         };
       }
 
-      // For now, we'll send to a system recipient
-      // In a real app, you'd determine the actual recipient
+      // TaskRabbit Model: Validate recipient and role-based messaging
+      if (!messageData.recipientId) {
+        return {
+          success: false,
+          error: 'Recipient ID is required for messaging',
+        };
+      }
+
+      // Get sender and recipient roles for validation
+      const { data: senderData } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      const { data: recipientData } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', messageData.recipientId)
+        .single();
+
+      const senderRole = senderData?.role;
+      const recipientRole = recipientData?.role;
+
+      // TaskRabbit validation: Only allow cross-role messaging
+      if (senderRole === recipientRole) {
+        return {
+          success: false,
+          error: 'Cannot send messages to users with the same role',
+        };
+      }
+
+      // Additional validation: Clients can only message professionals, professionals can only message clients
+      if (senderRole === 'CLIENT' && recipientRole !== 'PROFESSIONAL') {
+        return {
+          success: false,
+          error: 'Clients can only message professionals',
+        };
+      }
+
+      if (senderRole === 'PROFESSIONAL' && recipientRole !== 'CLIENT') {
+        return {
+          success: false,
+          error: 'Professionals can only message clients',
+        };
+      }
+
+      // Validate that the job exists and the user has permission to message about it
+      const { data: jobData } = await supabase
+        .from('jobs')
+        .select('client_id, professional_id')
+        .eq('id', jobId)
+        .single();
+
+      if (!jobData) {
+        return {
+          success: false,
+          error: 'Job not found',
+        };
+      }
+
+      // Additional TaskRabbit validation: Ensure the conversation is job-related
+      const isJobOwner = jobData.client_id === user.id;
+      const isJobProfessional = jobData.professional_id === user.id;
+      const isRecipientJobOwner = jobData.client_id === messageData.recipientId;
+      const isRecipientJobProfessional = jobData.professional_id === messageData.recipientId;
+
+      if (!(isJobOwner || isJobProfessional || isRecipientJobOwner || isRecipientJobProfessional)) {
+        return {
+          success: false,
+          error: 'You can only message about jobs you are involved in',
+        };
+      }
+
       const { data, error } = await supabase
         .from('messages')
         .insert({
           job_id: jobId,
           sender_id: user.id,
-          recipient_id: 'system', // This should be the actual recipient
+          recipient_id: messageData.recipientId,
           content: messageData.content,
           message_type: messageData.messageType || 'TEXT',
           is_read: false,
@@ -863,6 +969,92 @@ class SupabaseApiClient {
     }
   }
 
+  // Professionals
+  async getProfessionals(filters?: {
+    categories?: string[];
+    location?: string;
+    county?: string;
+    city?: string;
+    searchQuery?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<ApiResponse<{ professionals: any[]; total: number; limit: number; offset: number }>> {
+    try {
+      let query = supabase
+        .from('professionals')
+        .select(`
+          *,
+          user:users!professionals_user_id_fkey(id, name, email, avatar)
+        `)
+        .eq('is_available', true);
+
+      if (filters?.categories && filters.categories.length > 0) {
+        query = query.overlaps('categories', filters.categories);
+      }
+
+      if (filters?.searchQuery) {
+        query = query.or(`bio.ilike.%${filters.searchQuery}%,user.name.ilike.%${filters.searchQuery}%`);
+      }
+
+      if (filters?.county) {
+        query = query.contains('service_areas', [filters.county]);
+      }
+
+      if (filters?.city) {
+        query = query.contains('service_areas', [filters.city]);
+      }
+
+      query = query
+        .order('rating', { ascending: false })
+        .range(filters?.offset || 0, (filters?.offset || 0) + (filters?.limit || 20) - 1);
+
+      const { data, error, count } = await query;
+
+      if (error) {
+        console.error('Error fetching professionals:', error);
+        return {
+          success: false,
+          error: error.message,
+        };
+      }
+
+      const professionals = (data || []).map(prof => ({
+        id: prof.id,
+        userId: prof.user_id,
+        hourlyRate: prof.hourly_rate,
+        rating: prof.rating,
+        reviewCount: prof.review_count,
+        bio: prof.bio,
+        categories: prof.categories,
+        serviceAreas: prof.service_areas,
+        isAvailable: prof.is_available,
+        experienceYears: prof.experience_years,
+        portfolioUrls: prof.portfolio_urls,
+        certifications: prof.certifications,
+        insuranceVerified: prof.insurance_verified,
+        createdAt: prof.created_at,
+        updatedAt: prof.updated_at,
+        user: prof.user,
+      }));
+
+      return {
+        success: true,
+        data: {
+          professionals,
+          total: count || 0,
+          limit: filters?.limit || 20,
+          offset: filters?.offset || 0,
+        },
+      };
+    } catch (error) {
+      console.error('Error fetching professionals:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch professionals',
+      };
+    }
+  }
+
   // Conversations
   async getConversations(limit?: number, offset?: number, userId?: string): Promise<ApiResponse<{ conversations: any[]; limit: number; offset: number }>> {
     try {
@@ -884,15 +1076,25 @@ class SupabaseApiClient {
       }
       
       console.log('Current user ID:', currentUserId);
+
+      // Get current user role for TaskRabbit-style filtering
+      const { data: userData } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', currentUserId)
+        .single();
+
+      const currentUserRole = userData?.role;
+      console.log('Current user role:', currentUserRole);
       
-      // Get unique job conversations for the current user
+      // Get unique job conversations for the current user with role-based filtering
       const { data: messages, error: messagesError } = await supabase
         .from('messages')
         .select(`
           job_id,
           job:jobs!messages_job_id_fkey(id, title, client_id, professional_id),
-          sender:users!messages_sender_id_fkey(id, name, avatar),
-          recipient:users!messages_recipient_id_fkey(id, name, avatar),
+          sender:users!messages_sender_id_fkey(id, name, avatar, role),
+          recipient:users!messages_recipient_id_fkey(id, name, avatar, role),
           content,
           created_at,
           sender_id,
@@ -914,6 +1116,39 @@ class SupabaseApiClient {
       
       (messages || []).forEach(message => {
         if (!message.job) return;
+        
+        // TaskRabbit Model: Filter out same-role conversations
+        const senderRole = message.sender?.role;
+        const recipientRole = message.recipient?.role;
+        
+        // Skip conversations between users of the same role
+        if (senderRole === recipientRole) {
+          console.log('Skipping same-role conversation:', senderRole, 'to', recipientRole);
+          return;
+        }
+
+        // Additional TaskRabbit validation:
+        // - Clients can only message professionals (after job creation)
+        // - Professionals can only message clients (whose jobs they applied to)
+        if (currentUserRole === 'CLIENT') {
+          // Client can only see conversations with professionals
+          // Check if the other person in the conversation is a professional
+          const otherUserRole = message.sender_id === currentUserId ? recipientRole : senderRole;
+          if (otherUserRole !== 'PROFESSIONAL') {
+            console.log('Client can only message professionals, skipping conversation with:', otherUserRole);
+            return;
+          }
+        }
+        
+        if (currentUserRole === 'PROFESSIONAL') {
+          // Professional can only see conversations with clients
+          // Check if the other person in the conversation is a client
+          const otherUserRole = message.sender_id === currentUserId ? recipientRole : senderRole;
+          if (otherUserRole !== 'CLIENT') {
+            console.log('Professional can only message clients, skipping conversation with:', otherUserRole);
+            return;
+          }
+        }
         
         const jobId = message.job_id;
         if (!jobConversations.has(jobId)) {
@@ -1621,6 +1856,78 @@ class SupabaseApiClient {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to fetch profile',
+      };
+    }
+  }
+
+  async updateUserRole(role: string): Promise<ApiResponse<User>> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        return {
+          success: false,
+          error: 'User not authenticated',
+        };
+      }
+
+      const { data, error } = await supabase
+        .from('users')
+        .update({
+          role: role,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id)
+        .select(`
+          id,
+          email,
+          name,
+          role,
+          phone,
+          avatar,
+          is_active,
+          is_verified,
+          email_verified_at,
+          phone_verified_at,
+          last_login_at,
+          created_at,
+          updated_at
+        `)
+        .single();
+
+      if (error) {
+        console.error('Error updating user role:', error);
+        return {
+          success: false,
+          error: error.message,
+        };
+      }
+
+      const updatedUser: User = {
+        id: data.id,
+        email: data.email,
+        name: data.name,
+        role: data.role,
+        phone: data.phone,
+        avatar: data.avatar,
+        isActive: data.is_active,
+        isVerified: data.is_verified,
+        emailVerifiedAt: data.email_verified_at,
+        phoneVerifiedAt: data.phone_verified_at,
+        lastLoginAt: data.last_login_at,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at,
+      };
+
+      return {
+        success: true,
+        data: updatedUser,
+      };
+    } catch (error) {
+      console.error('Error updating user role:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to update user role',
       };
     }
   }
