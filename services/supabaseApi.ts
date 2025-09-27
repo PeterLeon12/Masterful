@@ -1242,7 +1242,7 @@ class SupabaseApiClient {
 
       // Create initial message in chat
       if (data && data.job) {
-        const applicationMessage = `Am aplicat la job-ul "${data.job.title}". ${applicationData.coverLetter || applicationData.proposal || 'Propunere: ' + (applicationData.proposedRate || applicationData.price) + ' RON, timp estimat: ' + (applicationData.estimatedDuration || applicationData.estimatedTime)}`;
+        const applicationMessage = `Am aplicat la job-ul "${data.job.title}". ${applicationData.coverLetter || applicationData.proposal || 'Propunere: ' + (applicationData.proposedRate || applicationData.price) + ' RON, timp estimat: ' + (applicationData.estimatedDuration || applicationData.estimatedTime)}. Vezi job-ul: /job/${jobId}`;
         
         const { error: messageError } = await supabase
           .from('messages')

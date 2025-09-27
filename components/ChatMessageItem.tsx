@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 import { ChatMessage } from '@/hooks/use-realtime-chat';
+import { useRouter } from 'expo-router';
 
 interface ChatMessageItemProps {
   message: ChatMessage;
@@ -13,6 +14,8 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   isOwnMessage, 
   showHeader 
 }) => {
+  const router = useRouter();
+  
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString('en-US', {
@@ -20,6 +23,64 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
       minute: '2-digit',
       hour12: true,
     });
+  };
+
+  const handleJobLinkPress = (jobId: string) => {
+    router.push(`/job/${jobId}`);
+  };
+
+  const renderMessageContent = (content: string) => {
+    // Check if message contains a job link pattern like "/job/jobId"
+    const jobLinkRegex = /\/job\/([a-f0-9-]+)/g;
+    const parts = content.split(jobLinkRegex);
+    
+    if (parts.length > 1) {
+      // Message contains job links, render with clickable links
+      const elements = [];
+      for (let i = 0; i < parts.length; i++) {
+        if (i % 2 === 0) {
+          // Regular text
+          if (parts[i]) {
+            elements.push(
+              <Text key={i} style={[
+                styles.messageText,
+                isOwnMessage ? styles.ownText : styles.otherText
+              ]}>
+                {parts[i]}
+              </Text>
+            );
+          }
+        } else {
+          // Job ID - make it clickable
+          const jobId = parts[i];
+          elements.push(
+            <TouchableOpacity
+              key={i}
+              onPress={() => handleJobLinkPress(jobId)}
+              style={styles.jobLink}
+            >
+              <Text style={[
+                styles.jobLinkText,
+                isOwnMessage ? styles.ownJobLinkText : styles.otherJobLinkText
+              ]}>
+                Vezi job-ul
+              </Text>
+            </TouchableOpacity>
+          );
+        }
+      }
+      return elements;
+    } else {
+      // No job links, render as regular text
+      return (
+        <Text style={[
+          styles.messageText,
+          isOwnMessage ? styles.ownText : styles.otherText
+        ]}>
+          {content}
+        </Text>
+      );
+    }
   };
 
   return (
@@ -36,12 +97,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
         styles.messageBubble,
         isOwnMessage ? styles.ownBubble : styles.otherBubble
       ]}>
-        <Text style={[
-          styles.messageText,
-          isOwnMessage ? styles.ownText : styles.otherText
-        ]}>
-          {message.content}
-        </Text>
+        {renderMessageContent(message.content)}
       </View>
     </View>
   );
@@ -102,5 +158,24 @@ const styles = StyleSheet.create({
   },
   otherText: {
     color: '#111827',
+  },
+  jobLink: {
+    marginTop: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignSelf: 'flex-start',
+  },
+  jobLinkText: {
+    fontSize: 12,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
+  ownJobLinkText: {
+    color: '#ffffff',
+  },
+  otherJobLinkText: {
+    color: '#3b82f6',
   },
 });
