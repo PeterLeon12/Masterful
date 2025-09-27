@@ -7,6 +7,7 @@ import { router } from 'expo-router';
 interface Conversation {
   id: string;
   jobId: string;
+  otherUserId?: string; // Added to support separate conversations per professional
   jobTitle: string;
   otherUser: {
     id: string;
@@ -61,7 +62,11 @@ export const ConversationList: React.FC<ConversationListProps> = ({ userId }) =>
   };
 
   const handleConversationPress = (conversation: Conversation) => {
-    router.push(`/chat/${conversation.jobId}`);
+    // Include the other user ID in the chat route to ensure proper conversation separation
+    const chatRoute = conversation.otherUserId 
+      ? `/chat/${conversation.jobId}?professionalId=${conversation.otherUserId}`
+      : `/chat/${conversation.jobId}`;
+    router.push(chatRoute);
   };
 
   const formatTime = (dateString: string) => {

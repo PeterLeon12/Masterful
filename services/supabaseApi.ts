@@ -1111,7 +1111,7 @@ class SupabaseApiClient {
         };
       }
 
-      // Group messages by job_id and get the latest message for each job
+      // Group messages by job_id + other_user_id to create separate conversations for each professional
       const jobConversations = new Map();
       
       (messages || []).forEach(message => {
@@ -1151,10 +1151,16 @@ class SupabaseApiClient {
         }
         
         const jobId = message.job_id;
-        if (!jobConversations.has(jobId)) {
-          jobConversations.set(jobId, {
-            id: jobId,
+        const otherUserId = message.sender_id === currentUserId ? message.recipient_id : message.sender_id;
+        
+        // Create unique conversation key: job_id + other_user_id
+        const conversationKey = `${jobId}-${otherUserId}`;
+        
+        if (!jobConversations.has(conversationKey)) {
+          jobConversations.set(conversationKey, {
+            id: conversationKey,
             jobId: jobId,
+            otherUserId: otherUserId,
             jobTitle: message.job.title,
             otherUser: message.sender_id === currentUserId ? message.recipient : message.sender,
             lastMessage: {
@@ -1165,6 +1171,17 @@ class SupabaseApiClient {
             unreadCount: 0,
             updatedAt: message.created_at,
           });
+        } else {
+          // Update the conversation with the latest message if this message is newer
+          const existingConversation = jobConversations.get(conversationKey);
+          if (new Date(message.created_at) > new Date(existingConversation.updatedAt)) {
+            existingConversation.lastMessage = {
+              content: message.content,
+              createdAt: message.created_at,
+              senderId: message.sender_id,
+            };
+            existingConversation.updatedAt = message.created_at;
+          }
         }
       });
 

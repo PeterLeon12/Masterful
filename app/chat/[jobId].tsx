@@ -33,7 +33,7 @@ interface Job {
 }
 
 export default function ChatScreen() {
-  const { jobId } = useLocalSearchParams<{ jobId: string }>();
+  const { jobId, professionalId } = useLocalSearchParams<{ jobId: string; professionalId?: string }>();
   const { user } = useAuth();
   
   const [job, setJob] = useState<Job | null>(null);
@@ -81,10 +81,35 @@ export default function ChatScreen() {
   const loadOtherUser = async () => {
     try {
       setIsLoadingOtherUser(true);
-      console.log('Loading other user for job:', jobId, 'User role:', user?.role);
+      console.log('Loading other user for job:', jobId, 'User role:', user?.role, 'Professional ID:', professionalId);
       
-      // For CLIENT: find any professional who applied to their job
+      // For CLIENT: use the specific professional ID if provided, otherwise find any professional who applied
       if (user?.role === 'CLIENT') {
+        if (professionalId) {
+          // Use the specific professional ID from the conversation
+          setOtherUserId(professionalId);
+          setOtherUserName('Professional'); // We'll update this with the actual name below
+          console.log('Set otherUserId from professionalId parameter:', professionalId);
+          
+          // Try to get the professional's name from job applications
+          try {
+            const response = await supabaseApiClient.getJobApplications(jobId!);
+            if (response.success && response.data) {
+              const professionalApplication = response.data.find(app => 
+                app.professional_id === professionalId
+              );
+              if (professionalApplication?.professional?.name) {
+                setOtherUserName(professionalApplication.professional.name);
+              }
+            }
+          } catch (error) {
+            console.error('Error loading professional name:', error);
+          }
+          setIsLoadingOtherUser(false);
+          return;
+        }
+        
+        // Fallback: find any professional who applied to their job
         try {
           const response = await supabaseApiClient.getJobApplications(jobId!);
           console.log('Job applications response for client:', response);
@@ -189,6 +214,7 @@ export default function ChatScreen() {
                 roomName={`job-${jobId}`}
                 recipientId={otherUserId}
                 recipientName={otherUserName}
+                professionalId={professionalId}
               />
             ) : (
               <View style={styles.loadingContainer}>

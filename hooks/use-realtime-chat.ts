@@ -17,6 +17,7 @@ interface UseRealtimeChatProps {
   userId: string;
   userName: string;
   recipientId: string;
+  professionalId?: string; // Added to filter messages by specific professional
   onMessage?: (messages: ChatMessage[]) => void;
   initialMessages?: ChatMessage[];
 }
@@ -26,6 +27,7 @@ export const useRealtimeChat = ({
   userId,
   userName,
   recipientId,
+  professionalId,
   onMessage,
   initialMessages = []
 }: UseRealtimeChatProps) => {
@@ -37,17 +39,25 @@ export const useRealtimeChat = ({
   const loadMessages = useCallback(async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
+      let query = supabase
         .from('messages')
         .select(`
           id,
           content,
           sender_id,
+          recipient_id,
           created_at,
           sender:users!messages_sender_id_fkey(id, name)
         `)
         .eq('job_id', roomName.replace('job-', ''))
         .order('created_at', { ascending: true });
+
+      // If professionalId is provided, filter messages to only show those between the current user and that specific professional
+      if (professionalId) {
+        query = query.or(`and(sender_id.eq.${userId},recipient_id.eq.${professionalId}),and(sender_id.eq.${professionalId},recipient_id.eq.${userId})`);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('Error loading messages:', error);
@@ -71,7 +81,7 @@ export const useRealtimeChat = ({
     } finally {
       setIsLoading(false);
     }
-  }, [roomName]);
+  }, [roomName, userId, professionalId]);
 
   // Send message
   const sendMessage = useCallback(async (content: string) => {

@@ -19,12 +19,14 @@ interface RealtimeChatProps {
   roomName: string;
   recipientId: string;
   recipientName: string;
+  professionalId?: string; // Added to support filtering by specific professional
 }
 
 export const RealtimeChat: React.FC<RealtimeChatProps> = ({
   roomName,
   recipientId,
   recipientName,
+  professionalId,
 }) => {
   const { user } = useAuth();
   const [newMessage, setNewMessage] = useState('');
@@ -41,6 +43,7 @@ export const RealtimeChat: React.FC<RealtimeChatProps> = ({
     userId: user?.id || '',
     userName: user?.name || 'Unknown',
     recipientId,
+    professionalId,
   });
 
   // Don't render if recipientId is not available
