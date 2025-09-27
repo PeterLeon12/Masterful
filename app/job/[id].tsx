@@ -9,7 +9,7 @@ import JobApplicationForm from '@/components/JobApplicationForm';
 import { 
   ArrowLeft, MapPin, Clock, DollarSign, User, 
   Calendar, AlertCircle, CheckCircle, MessageCircle, Send, 
-  Edit, Trash2, MoreVertical 
+  Edit, Trash2, MoreVertical, Search
 } from 'lucide-react-native';
 
 

@@ -58,6 +58,24 @@ function RootLayoutNav() {
                 presentation: "modal"
               }} 
             />
+            <Stack.Screen 
+              name="job/[id]" 
+              options={{ 
+                headerShown: false
+              }} 
+            />
+            <Stack.Screen 
+              name="chat/[jobId]" 
+              options={{ 
+                headerShown: false
+              }} 
+            />
+            <Stack.Screen 
+              name="my-jobs" 
+              options={{ 
+                headerShown: false
+              }} 
+            />
     </Stack>
   );
 }
